@@ -38,7 +38,8 @@
         <table class="table">
             <tr>
                 <th>Matric</th>
-                <td style="text-transform:uppercase"><%= appendChecksum(person.name) %></td>
+                <td style="text-transform:uppercase"><%= appendChecksum(person.name) %>
+                    <span id="matricInfo" style="text-transform:none; padding: 0 2em;"></span></td>
             </tr>
             <tr>
                 <th>Email</th>
@@ -106,6 +107,22 @@
                 $('#group<%= i %>').text(data);
             });
         <% } %>
+        var fullMatricNum = "<%= person.name %>";
+        var matricNum = parseInt(fullMatricNum.substr(1), 10),
+            factors = [];
+        for(var p = 2; p <= matricNum; p++){
+            while(matricNum % p == 0){
+                factors.push(p);
+                matricNum /= p;
+            }
+        }
+        if(!factors.length){
+            $("#matricInfo").html("This matriculation number is a prime!").css({
+                color: "red"
+            });
+        }else{
+            $("#matricInfo").html("This matriculation number can be factorized as " + factors.join(" * ")); 
+        }
     </script>
     <!--<script>
     var careerDn = '<%= person.career %>';
