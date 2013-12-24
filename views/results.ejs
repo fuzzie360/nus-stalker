@@ -1,74 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>National University of Stalkers</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <!-- Le styles -->
-    <link href="css/bootstrap.css" rel="stylesheet">
-    <style type="text/css">
-    .table-hand {
-        cursor: pointer;
-    }
-    </style>
-    <link href="css/bootstrap-responsive.css" rel="stylesheet">
-
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="js/html5shiv.js"></script>
-    <![endif]-->
-  </head>
-
-  <% 
-  
-  function appendChecksum(matric) {
-      var sum = 0;
-      for (var i=1; i<8; i++) {
-          sum += parseInt(matric[i]);
-      }
-      var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
-      return matric + table[sum%13];
+<% include head %>
+<% 
+function appendChecksum(matric) {
+  var sum = 0;
+  for (var i=1; i<8; i++) {
+      sum += parseInt(matric[i]);
   }
-  
-  %>
-
-  <body>
-
-    <div class="container text-center">
-
-        <h1>Search results for "<%= search %>"</h1>
-        
-        <table class="table table-hover">
-            <tr>
-                <th>#</th>
-                <th>Matric</th>
-                <th>Name</th>
-                <th>Faculty</th>
+  var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
+  if (typeof table[sum%13] == "undefined") return matric;
+  return matric + table[sum%13];
+}
+%>
+<div class="text-center">
+    <h1>Search results for "<%= search %>"</h1>
+</div>
+<table id="table-results" class="table table-hover tablesorter">
+    <thead>
+        <tr>
+            <th>Matric</th>
+            <th>Name</th>
+            <th>Faculty</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% for (var i=0; i<results.length; i++) { %>
+            <tr onclick="stalk('<%= results[i].matric %>');" class="table-hand">
+                <td style="text-transform:uppercase"><%= appendChecksum(results[i].matric) %></td>
+                <td><%= results[i].displayName %></td>
+                <td><%= results[i].faculties[0] ? results[i].faculties[0].name : '-' %></td>
             </tr>
-            <% for (var i=0; i<results.length; i++) { %>
-                <tr onclick="stalk('<%= results[i].name %>');" class="table-hand">
-                    <td><%= i+1 %></td>
-                    <td style="text-transform:uppercase"><%= appendChecksum(results[i].name) %></td>
-                    <td><%= results[i].displayName %></td>
-                    <td><%= results[i].department ? results[i].department : '-' %></td>
-                </tr>
-            <% } %>
-        </table>
-	<a href="/" class="btn pull-right">Back</a>
-    </div> <!-- /container -->
-
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery-1.10.2.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script>
-    function stalk(id) {
-        window.location.href = 'person?id=' + id;
-    }
-    </script>
-  </body>
-</html>
+        <% } %>
+    </tbody>
+</table>
+<a href="/" class="btn btn-default pull-right">Back</a>
+<script>
+$(function() {
+    $.extend($.tablesorter.themes.bootstrap, {
+        // these classes are added to the table. To see other table classes available,
+        // look here: http://twitter.github.com/bootstrap/base-css.html#tables
+        table      : 'table table-bordered',
+        caption    : 'caption',
+        header     : 'bootstrap-header', // give the header a gradient background
+        footerRow  : '',
+        footerCells: '',
+        icons      : '', // add "icon-white" to make them white; this icon class is added to the <i> in the header
+        sortNone   : 'bootstrap-icon-unsorted',
+        sortAsc    : 'icon-chevron-up glyphicon glyphicon-chevron-up',     // includes classes for Bootstrap v2 & v3
+        sortDesc   : 'icon-chevron-down glyphicon glyphicon-chevron-down', // includes classes for Bootstrap v2 & v3
+        active     : '', // applied when column is sorted
+        hover      : '', // use custom css here - bootstrap class may not override it
+        filterRow  : '', // filter row class
+        even       : '', // odd row zebra striping
+        odd        : ''  // even row zebra striping
+    });
+      
+    $('#table-results').tablesorter({
+		theme: 'bootstrap',
+        widthFixed: true,
+        headerTemplate : '{content} {icon}',
+		widgets : [ 'uitheme', 'stickyHeaders', 'filter', 'zebra' ],
+		widgetOptions: {
+            zebra : ['even', 'odd'],
+            filter_reset : '.reset',
+			group_separator : '-'
+		}
+        
+	}).highlight("<%= search %>");
+});
+function stalk(id) {
+    window.location.href = '/person/' + id;
+}
+</script>
+<% include foot %>

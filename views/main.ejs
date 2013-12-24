@@ -1,43 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>National University of Stalkers</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <!-- Le styles -->
-    <link href="css/bootstrap.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.css" rel="stylesheet">
-
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="js/html5shiv.js"></script>
-    <![endif]-->
-  </head>
-
-  <body>
-
-    <div class="container text-center" style="margin-top:50px">
-	<img src="img/logo.png">
-        <form action="/search" method="get">
-            <fieldset>
-                <div class="input-append">
-                  <input class="span6" id="appendedInputButton" type="text" name="q" placeholder="Name to search for" >
-                  <button class="btn" type="submit">Search</button>
-                </div>
-            </fieldset>
-        </form>
-        <p class="muted">"I solemnly swear I am up to no good."</p>
-
-    </div> <!-- /container -->
-
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery-1.10.2.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-
-  </body>
-</html>
+<% include head %>
+<div class="text-center" style="margin-top:50px">
+    <img src="img/logo.png">
+    <form action="/search" method="get">
+        <div class="form-group">
+            <div class="input-group col-sm-8 col-sm-offset-2">
+                <input id="typeahead" type="text" class="form-control" name="q" placeholder="Name to search for">
+                <span class="input-group-btn">
+                    <input type="submit" class="btn btn-default" value="Search">
+                </span>
+            </div>
+        </div>
+    </form>
+    <p class="muted">"I solemnly swear I am up to no good."</p>
+</div>
+<script>
+$(function(){
+    $('#typeahead').typeahead({                                
+        name: 'names',                                                          
+        remote: '/suggest?q=%QUERY',                                         
+        limit: 10                                                                   
+    })
+    .on('typeahead:opened',function(){$('.tt-dropdown-menu').css('width',$('#typeahead').outerWidth() + 'px');})
+    .bind('typeahead:selected', function(obj, datum, name) {
+        $('form').submit();
+    });
+});
+</script>
+<% include foot %>

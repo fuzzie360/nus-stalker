@@ -1,132 +1,255 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>National University of Stalkers</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <!-- Le styles -->
-    <link href="css/bootstrap.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.css" rel="stylesheet">
-
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="js/html5shiv.js"></script>
-    <![endif]-->
-  </head>
-  
-  <% 
-  
-  function appendChecksum(matric) {
-      var sum = 0;
-      for (var i=1; i<8; i++) {
-          sum += parseInt(matric[i]);
-      }
-      var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
-      return matric + table[sum%13];
+<% include head %>
+<% 
+function appendChecksum(matric) {
+  var sum = 0;
+  for (var i=1; i<8; i++) {
+      sum += parseInt(matric[i]);
   }
-  
-  %>
+  var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
+  return matric + table[sum%13];
+}
+%>
+<div class="text-center">
+    <h1><%= person.displayName %></h1>
+</div>
+    
+<table class="table">
+    <tr>
+        <th>Matric</th>
+        <td style="text-transform:uppercase"><%= appendChecksum(person.matric) %></td>
+    </tr>
+    <tr>
+        <th>Email</th>
+        <td><%= person.email %></td>
+    </tr>
+    <% if (person.forwardTo) { %>
+    <tr>
+        <th>Forwarded to</th>
+        <td><%= person.forwardTo ? person.forwardTo : '-' %></td>
+    </tr>
+    <% } %>
+    <tr>
+        <th>Career</th>
+        <td>
+            <ul>
+                <% for (var i=0; i<person.careers.length; i++){ %>
+                    <li><%= person.careers[i].name %></li>
+                <% } %>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Faculty</th>
+        <td>
+            <ul>
+                <% for (var i=0; i<person.faculties.length; i++){ %>
+                    <li><%= person.faculties[i].name %></li>
+                <% } %>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <th>Course</th>
+        <td>
+            <ul>
+                <% for (var i=0; i<person.courses.length; i++){ %>
+                    <li><%= person.courses[i].name %></li>
+                <% } %>
+            </ul>
+        </td>
+    </tr>
+</table>
 
-  <body>
-
-    <div class="container text-center">
-        <h1><%= person.displayName %></h1>
-        
-        <table class="table">
-            <tr>
-                <th>Matric</th>
-                <td style="text-transform:uppercase"><%= appendChecksum(person.name) %>
-                    <span id="matricInfo" style="text-transform:none; padding: 0 2em;"></span></td>
+<h3>Module History</h3>
+<table id="table-modules" class="table">
+    <thead>
+        <tr>
+            <th colspan="2">Semester</th>
+            <th rowspan="2" class="group-letter-2">Code</th>
+            <th rowspan="2" class="group-none">Title</th>
+            <th rowspan="2">MC</th>
+        </tr>
+        <tr>
+            <th class="sorter-false group-letter-99">Year</th>
+            <th class="sorter-false">Sem</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% for (var i=0; i<person.modules.length; i++){ %>
+            <% var m = person.modules[i] %>
+            <tr onclick="module('<%= m.code %>');" class="table-hand">
+                <td><%= 2000 + m.StudentModule.year %> <span style="display:none"> Semester <%= m.StudentModule.semester %></span></td>
+                <td><%= m.StudentModule.semester %></td>
+                <td><%= m.code %></td>
+                <td><%= m.name %></td>
+                <td><%= m.mc %></td>
             </tr>
-            <tr>
-                <th>Email</th>
-                <td><%= person.mail %></td>
-            </tr>
-            <tr>
-                <th>Career</th>
-                <td id="career"></td>
-            </tr>
-            <tr>
-                <th>Faculty</th>
-                <td><%= person.department %></td>
-            </tr>
-            <tr>
-                <th>Course</th>
-                <td id="course"></td>
-            </tr>
-            <tr>
-                <th>Modules</th>
-                <td>
-                    <% if (person.modules.length === 0) { %>
-                        Not yet assigned
-                    <% } %>
-                    <ul>
-                    <% for (var i=0; i<person.modules.length; i++){ %>
-                        <li><%= person.modules[i] %></li>
-                    <% } %>
-                </ul></td>
-            </tr>
-            <tr>
-                <th>Groups</th>
-                <td>
-                    <% if (person.groups.length === 0) { %>
-                        Not a member of any group
-                    <% } %>
-                    <ul>
-                    <% for (var i=0; i<person.groups.length; i++){ %>
-                        <li id="group<%= i %>"></li>
-                    <% } %>
-                </ul></td>
-            </tr>
-        </table>
-	<div class="pull-right">
-	<button onclick="history.back()"  class="btn">Back</button>
-        <a href="/" class="btn">New Search</a>
-	</div>
-    </div> <!-- /container -->
-
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery-1.10.2.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script>
-        $.get('/api/getDisplayName?dn=<%= person.course %>', function(data){
-            $('#course').text(data);
-        });
-        
-        $.get('/api/getDisplayName?dn=<%= person.career %>', function(data){
-            $('#career').text(data);
-        });
-        
-        <% for (var i=0; i<person.groups.length; i++){ %>
-            $.get('/api/getDisplayName?dn=<%= person.groups[i] %>', function(data){
-                $('#group<%= i %>').text(data);
-            });
         <% } %>
-        var fullMatricNum = "<%= person.name %>";
-        var matricNum = parseInt(fullMatricNum.substr(1), 10),
-            factors = [];
-        for(var p = 2; p <= matricNum; p++){
-            while(matricNum % p == 0){
-                factors.push(p);
-                matricNum /= p;
-            }
+    </tbody>
+</table>
+
+<h3>Modules By Department</h3>
+<div id="module-by-dept-chart" style="height:300px"></div>
+
+<h3>Modules By Level</h3>
+<div id="module-by-level-chart" style="height:300px"></div>
+
+<div class="pull-right">
+    <button onclick="history.back()"  class="btn btn-default">Back</button>
+    <a href="/" class="btn btn-primary">New Search</a>
+</div>
+<div class="clearfix"></div>
+<br>
+<script>
+$(function() {
+    $.extend($.tablesorter.themes.bootstrap, {
+        // these classes are added to the table. To see other table classes available,
+        // look here: http://twitter.github.com/bootstrap/base-css.html#tables
+        table      : 'table table-bordered',
+        caption    : 'caption',
+        header     : 'bootstrap-header', // give the header a gradient background
+        footerRow  : '',
+        footerCells: '',
+        icons      : '', // add "icon-white" to make them white; this icon class is added to the <i> in the header
+        sortNone   : 'bootstrap-icon-unsorted',
+        sortAsc    : 'icon-chevron-up glyphicon glyphicon-chevron-up',     // includes classes for Bootstrap v2 & v3
+        sortDesc   : 'icon-chevron-down glyphicon glyphicon-chevron-down', // includes classes for Bootstrap v2 & v3
+        active     : '', // applied when column is sorted
+        hover      : '', // use custom css here - bootstrap class may not override it
+        filterRow  : '', // filter row class
+        even       : '', // odd row zebra striping
+        odd        : ''  // even row zebra striping
+    });
+      
+    $('#table-modules').tablesorter({
+		theme: 'bootstrap',
+        widthFixed: true,
+        headerTemplate : '{content} {icon}',
+		widgets : [ 'uitheme', 'stickyHeaders', 'filter', 'zebra', 'group' ],
+		widgetOptions: {
+            zebra : ['even', 'odd'],
+            filter_reset : '.reset',
+		},
+        sortList: [[0,1],[1,1],[2,0]]
+	});
+    
+    var modules = [
+    <% for (var i=0; i<person.modules.length; i++){ %>
+        <% var m = person.modules[i] %>
+        {
+            semester: "<%= 2000 + m.StudentModule.year %> Sem <%= m.StudentModule.semester %>",
+            mc: <%= m.mc %>,
+            code: "<%= m.code %>"
+        },
+    <% } %> 
+    ];
+    
+    modules.forEach(function(module) {
+        var departmentCodeRegex = /^[a-zA-Z]*/g;
+        var match = departmentCodeRegex.exec(module.code);
+        if (match) {
+            module.departmentCode = match[0];
         }
-        if(factors.length === 1){
-            $("#matricInfo").html("This matriculation number is a prime!").css({
-                color: "red"
-            });
-        }else{
-            $("#matricInfo").html("This matriculation number can be factorized as " + factors.join(" * ")); 
+    });
+    modules.forEach(function(module) {
+        var levelCodeRegex = /[0-9][0-9][0-9][0-9]/g;
+        var match = levelCodeRegex.exec(module.code);
+        if (match) {
+            module.level = Math.floor(match[0]/1000)*1000;
         }
-    </script>
-    <!--<script>
-    var careerDn = '<%= person.career %>';
-    var courseDn = '<%= person.course %>';
-    </script>-->
-  </body>
-</html>
+    });
+    
+    var modulesByDept = _.groupBy(modules, function(m) { return m.departmentCode });
+    var sems = [];
+    for (var dept in modulesByDept) {
+        modulesByDept[dept] = _.groupBy(modulesByDept[dept], function(m) {
+            return m.semester
+        })
+        
+        sems = _.union(sems, _.keys(modulesByDept[dept]));
+    }
+    
+    for (var dept in modulesByDept) {
+        sems.forEach(function(sem) {
+            modulesByDept[dept][sem] = _.reduce(modulesByDept[dept][sem], function(memo,m) {
+                return m.mc + memo;
+            }, 0)
+        });
+        
+        modulesByDept[dept] = _.pairs(modulesByDept[dept]);
+    }
+    
+    var dataByDept = [];
+    
+    for (var dept in modulesByDept) {
+        dataByDept.push({
+            data: _.sortBy(modulesByDept[dept], function(d){ return d[0] }),
+            label: dept + " Department"
+        })
+    }
+    
+	$.plot("#module-by-dept-chart", dataByDept, {
+        series: {
+            stack: true,
+            bars: {
+				show: true,
+				barWidth: 0.6,
+                align: "center"
+			}
+		},
+		xaxis: {
+			mode: "categories",
+			tickLength: 0
+		}
+    });
+    
+    var modulesByLevel = _.groupBy(modules, function(m) { return m.level });
+    var levels = [];
+    for (var level in modulesByLevel) {
+        modulesByLevel[level] = _.groupBy(modulesByLevel[level], function(m) {
+            return m.semester
+        })
+        
+        levels = _.union(levels, _.keys(modulesByLevel[level]));
+    }
+    
+    for (var level in modulesByLevel) {
+        levels.forEach(function(sem) {
+            modulesByLevel[level][sem] = _.reduce(modulesByLevel[level][sem], function(memo,m) {
+                return m.mc + memo;
+            }, 0)
+        });
+        
+        modulesByLevel[level] = _.pairs(modulesByLevel[level]);
+    }
+    
+    var dataByLevel = [];
+    
+    for (var level in modulesByLevel) {
+        dataByLevel.push({
+            data: _.sortBy(modulesByLevel[level], function(d){ return d[0] }),
+            label: "Level " + level
+        })
+    }
+    
+    
+	$.plot("#module-by-level-chart", dataByLevel, {
+        series: {
+            stack: true,
+            bars: {
+				show: true,
+				barWidth: 0.6,
+                align: "center"
+			}
+		},
+		xaxis: {
+			mode: "categories",
+			tickLength: 0
+		}
+    });
+});
+function module(id) {
+    window.location.href = '/module/' + id;
+}
+</script>
+<% include foot %>

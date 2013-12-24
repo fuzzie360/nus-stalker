@@ -2,23 +2,25 @@ var config = require('./config');
 var util = require('util');
 var http = require('http')
 
+var _ = require('underscore');
 var express = require('express');
 var ejs = require('ejs');
 var passport = require('passport');
 var OpenIDStrategy = require('passport-openid').Strategy;
-var ldap = require('ldapjs');
+var mysql = require('mysql');
+var Sequelize = require('sequelize');
 
-var client = ldap.createClient({
-	url:'ldap://ldapstu.nus.edu.sg:389',
-	maxConnections: 5,
-	timeout: 10000
-});
-client.bind(config.ldap.user, config.ldap.pass, function(err) {
-    if (err) {
-        console.log('Error binding to ldap');
-        process.exit(1);
-    }
-});
+var sequelize = new Sequelize(config.db.database, config.db.user, config.db.pass, config.db.opt);
+var Models = sequelize.import(__dirname + '/models.js');
+
+var Student = Models.Student;
+var Module = Models.Module;
+var Career = Models.Career;
+var Faculty = Models.Faculty;
+var Course = Models.Course;
+var StudentModule = Models.StudentModule;
+
+var auth = true;
 
 passport.serializeUser(function(user, done) {
     done(null, user);
@@ -30,14 +32,15 @@ passport.deserializeUser(function(user, done) {
 
 passport.use(new OpenIDStrategy({
         providerURL: 'https://openid.nus.edu.sg/',
-		returnURL: 'http://'+config.server.host+'/auth/openid/return',
-		realm: 'http://'+config.server.host+'/',
-		stateless: true,
-		profile: true
-	},
-	function(identifier, profile, done) {
-		done(null, identifier);
-	}
+        returnURL: 'http://'+config.server.host+'/auth/openid/return',
+        realm: 'http://'+config.server.host+'/',
+        stateless: true,
+        profile: true
+    },
+    function(identifier, profile, done) {
+        profile.id = identifier.split('/').pop();
+        done(null, profile);
+    }
 ));
 
 // set up express
@@ -56,193 +59,111 @@ app.use(app.router);
 server.listen(config.server.port, config.server.ip);
 process.stdout.write('INFO:\tServer listening at port ' + config.server.port + '\n');
 
-app.get('/', function(req, res){
-    if (!req.isAuthenticated()) {
+app.get('/', function(req, res) {
+    if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
     }
     res.render('main.ejs');
 });
 
-app.get('/search', function(req, eres){
-    if (!req.isAuthenticated()) {
-        eres.redirect('/login');
+app.get('/suggest', function(req, res) {
+    if (auth && !req.isAuthenticated()) {
+        res.redirect('/login');
     }
     
-    var baseDN = 'ou=Students,dc=stu,dc=nus,dc=edu,dc=sg';
-    var search = {
-        filter: '(displayName=*' + req.query.q + '*)',
-        scope: 'sub'
-    }
-    
-    client.search(baseDN, search, function(err, res) {
-        var results = [];
-        
-        if (err) {
-            eres.send(500);
-            return;
-        }
-        
-        res.on('searchEntry', function(entry) {
-            results.push(entry.object);
-        });
-        
-        res.on('error', function(err) {
-            console.log(err.message);
-        });
-        
-        res.on('end', function(result) {
-            eres.render('results.ejs', {results:results, search:req.query.q});
-        });
+    Student.findAll({
+        attributes: ['displayName'],
+        where: ['displayName like ?', '%' + req.query.q + '%'],
+        limit: 10
+    }).success(function(results) {
+        res.json(_.pluck(results, 'displayName'));
     });
 });
 
-app.get('/person', function(req, eres){
-    if (!req.isAuthenticated()) {
-        eres.redirect('/login');
+app.get('/search', function(req, res) {
+    if (auth && !req.isAuthenticated()) {
+        res.redirect('/login');
     }
     
-   var baseDN = 'ou=Students,dc=stu,dc=nus,dc=edu,dc=sg';
-   var search = {
-       filter: '(name=' + req.query.id + ')',
-       scope: 'sub'
-   }
-   
-   client.search(baseDN, search, function(err, res) {
-       var person = {};
-       var found = false;
-       
-       if (err) {
-           eres.send(500);
-           return;
-       }
-       
-       res.on('searchEntry', function(entry) {
-           person = entry.object;
-           found = true;
-       });
-       
-       res.on('error', function(err) {
-           console.log(err.message);
-       });
-       
-       res.on('end', function(result) {
-           if (!found) return eres.send(404);
-
-           person.career = '';
-           person.course = '';
-           
-           person.modules = [];
-           
-           person.groups = [];
-           if (!(person.memberOf instanceof Array)) {
-               person.memberOf = [person.memberOf];
-           }
-           for (var i=0; i<person.memberOf.length; i++) {
-               var group = person.memberOf[i];
-
-               if (group.indexOf("DC=stf") !== -1) continue;
-               switch (getGroupType(group)) {
-                   case 'Careers':
-                       person.career = group;
-                       break;
-                   case 'Courses':
-                       person.course = group;
-                       break;
-                   case 'Modules':
-                       person.modules.push(getModuleCode(group));
-                       break;
-                   default:
-                       person.groups.push(group);
-                       break;
-               }
-           }
-           eres.render('person.ejs', {person:person});
-       });
-   });
+    Student.findAll({
+        where: ['displayName like ?', '%' + req.query.q + '%'],
+        include: [Faculty]
+    }).success(function(results) {
+        if (results.length == 1) {
+            res.redirect('/person/' + results[0].matric );
+            return;
+        }
+        
+        res.render('results.ejs', { search:req.query.q, results:results });
+    });
 });
 
-app.get('/login', function(req, res){
-	if (req.isAuthenticated()) {
-		res.redirect('/');
-		return;
-	}
+app.get('/person/:matric', function(req, res) {
+    if (auth && !req.isAuthenticated()) {
+        res.redirect('/login');
+    }
+
+    Student.find({
+        where: { matric: req.params.matric },
+        include: [Career, Faculty, Course],
+        joinTableAttributes: ['year', 'semester']
+    }).success(function(person) {
+        person.getModules().success(function(modules) {
+            person.modules = modules;
+            res.render('person.ejs', { person:person });
+        }); 
+    });
+});
+
+app.get('/module/:code', function(req, res) {
+    if (auth && !req.isAuthenticated()) {
+        res.redirect('/login');
+    }
+    
+    Module.find({
+        where: { code: req.params.code }
+    }).success(function(module) {
+        module.getStudents().success(function(students) {
+            module.students = students;
+            res.render('module.ejs', { module:module });
+        });
+    })
+});
+
+app.get('/login', function(req, res) {
+    if (!auth || req.isAuthenticated()) {
+        res.redirect('/');
+        return;
+    }
     res.render('login.ejs');
 });
 
-app.get('/logout', function(req, res){
+app.get('/logout', function(req, res) {
    req.logout(); 
    res.redirect('/');
 });
 
 app.post('/auth/openid', passport.authenticate('openid'));
 
-app.get('/auth/openid/return', passport.authenticate('openid'), function(req, res){
-	if (!req.isAuthenticated()) {
-		res.redirect('/forbidden');
-		return;
-	}
+app.get('/auth/openid/return', passport.authenticate('openid'), function(req, res) {
+    /*var allowed = [ 'a0096836'];
+    
+    if (allowed.indexOf(req.user.id) < 0) {
+        req.logout();
+    }
+    
+    if (!req.isAuthenticated()) {
+        res.redirect('/forbidden');
+        return;
+    }*/
     
     res.redirect('/');
 });
 
-app.get('/forbidden', function (req, res){
+app.get('/forbidden', function (req, res) {
     res.render('forbidden.ejs');
 });
 
-app.get('/api/getDisplayName', function (req, eres) {
-    if(!req.query.dn) return eres.send('Not yet assigned');
-    var baseDN = req.query.dn;
-    var search = {
-        filter: '(objectClass=*)',
-        scope: 'base',
-        attriutes: 'displayName'
-    }
-   try { 
-    client.search(baseDN, search, function(err, res) {
-        var displayName = '';
-       
-        if (err) {
-            eres.send(500);
-            return;
-        }
-       
-        res.on('searchEntry', function(entry) {
-            displayName = entry.object.displayName;
-        });
-       
-        res.on('error', function(err) {
-            console.log(err.message);
-        });
-       
-        res.on('end', function(result) {
-            eres.send(displayName);
-            return;
-        });
-    });
-    } catch(e) {
-         eres.send('Error loading');
-    }
-});
-
-function getGroupType(group) {
-    var typeRegex = new RegExp("OU=(.*?),OU=Student,DC=stu,DC=nus,DC=edu,DC=sg");
-    var match = typeRegex.exec(group);
-    
-    if (match) {
-        return match[1];
-    }
-    return null;
-}
-
-function getModuleCode(group) {
-    var moduleRegex = new RegExp("CN=MODULE(.*?),OU=Modules,OU=Student,DC=stu,DC=nus,DC=edu,DC=sg");
-    var match = moduleRegex.exec(group);
-
-    if (match) {
-        return match[1];
-    }
-    return null;
-}
 
 function appendChecksum(matric) {
     var sum = 0;

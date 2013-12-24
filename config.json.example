@@ -1,11 +1,19 @@
 {
-	"server": {
-		"host": "127.0.0.1",
-		"ip": "0.0.0.0",
-		"port": 80
-	},
-	"ldap": {
-		"user": "nusstu\\USERNAME",
-		"pass": "PASSWORD"
-	}
+    "server": {
+        "host": "127.0.0.1:9003",
+            "ip": "127.0.0.1",
+            "port": 9003
+    },
+
+        "db": {
+            "host": "127.0.0.1",
+            "user": "root",
+            "pass": "",
+            "database": "stalker"
+        },
+
+        "ldap": {
+            "user": "nusstu\\USERNAME",
+            "pass": "PASSWORD"
+        }
 }
