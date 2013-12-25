@@ -115,12 +115,12 @@ app.get('/search', function(req, res) {
         include: [Faculty],
         limit: 200,
     })*/
-    sequelize.query('SELECT Students.*, Faculties.name AS `faculties.name`,'
-    + ' Faculties.id AS `faculties.id`, Faculties.createdAt AS `faculties.createdAt`,'
-    + ' Faculties.updatedAt AS `faculties.updatedAt`,'
+    sequelize.query('SELECT Students.*, faculties.name AS `faculties.name`,'
+    + ' faculties.id AS `faculties.id`, faculties.createdAt AS `faculties.createdAt`,'
+    + ' faculties.updatedAt AS `faculties.updatedAt`,'
     + ' MATCH (displayName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
     + ' LEFT OUTER JOIN StudentFaculties ON Students.id = StudentFaculties.StudentId'
-    + ' LEFT OUTER JOIN Faculties AS faculties ON Faculties.id = StudentFaculties.FacultyId'
+    + ' LEFT OUTER JOIN Faculties AS faculties ON faculties.id = StudentFaculties.FacultyId'
     + ' WHERE MATCH (displayName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3'
     + ' ORDER BY relevance DESC LIMIT 200', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
     .success(function(results) {
