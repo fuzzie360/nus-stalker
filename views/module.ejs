@@ -6,6 +6,7 @@ function appendChecksum(matric) {
       sum += parseInt(matric[i]);
   }
   var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
+  if (typeof table[sum%13] == "undefined") return matric;
   return matric + table[sum%13];
 }
 %>
