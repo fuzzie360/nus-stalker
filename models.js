@@ -17,6 +17,13 @@ module.exports = function(sequelize, DataTypes) {
         description: DataTypes.TEXT,
         mc: DataTypes.INTEGER
     });
+    
+    var ModuleDepartment = sequelize.define('ModuleDepartment', {
+        name: DataTypes.STRING
+    });
+    
+    Module.belongsTo(ModuleDepartment);
+    ModuleDepartment.hasMany(Module);
 
     var Career = sequelize.define('Career', {
         dn: DataTypes.STRING,

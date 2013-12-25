@@ -20,8 +20,10 @@ $(function(){
         remote: '/suggest?q=%QUERY',                                         
         limit: 10                                                                   
     })
-    .on('typeahead:opened',function(){$('.tt-dropdown-menu').css('width',$('#typeahead').outerWidth() + 'px');})
-    .bind('typeahead:selected', function(obj, datum, name) {
+    .on('typeahead:opened',function() {
+        $('.tt-dropdown-menu').css('width',$('#typeahead').outerWidth() + 'px');
+    })
+    .on('typeahead:selected', function(obj, datum, name) {
         $('form').submit();
     });
 });

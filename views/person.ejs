@@ -139,27 +139,25 @@ $(function() {
         {
             semester: "<%= 2000 + m.StudentModule.year %> Sem <%= m.StudentModule.semester %>",
             mc: <%= m.mc %>,
-            code: "<%= m.code %>"
+            code: "<%= m.code %>",
+            department: "<%= m.moduleDepartment ? m.moduleDepartment.name : "null" %>"
         },
     <% } %> 
     ];
     
-    modules.forEach(function(module) {
-        var departmentCodeRegex = /^[a-zA-Z]*/g;
-        var match = departmentCodeRegex.exec(module.code);
-        if (match) {
-            module.departmentCode = match[0];
-        }
-    });
-    modules.forEach(function(module) {
+    for (var i=0; i<modules.length; i++) {
+        var module = modules[i];
         var levelCodeRegex = /[0-9][0-9][0-9][0-9]/g;
         var match = levelCodeRegex.exec(module.code);
         if (match) {
             module.level = Math.floor(match[0]/1000)*1000;
         }
-    });
+        if (!module.department || module.department == "null") {
+            module.department = "No Department";
+        }
+    };
     
-    var modulesByDept = _.groupBy(modules, function(m) { return m.departmentCode });
+    var modulesByDept = _.groupBy(modules, function(m) { return m.department });
     var sems = [];
     for (var dept in modulesByDept) {
         modulesByDept[dept] = _.groupBy(modulesByDept[dept], function(m) {
@@ -184,11 +182,11 @@ $(function() {
     for (var dept in modulesByDept) {
         dataByDept.push({
             data: _.sortBy(modulesByDept[dept], function(d){ return d[0] }),
-            label: dept + " Department"
+            label: dept
         })
     }
     
-	$.plot("#module-by-dept-chart", dataByDept, {
+	$.plot('#module-by-dept-chart', dataByDept, {
         series: {
             stack: true,
             bars: {
@@ -198,9 +196,23 @@ $(function() {
 			}
 		},
 		xaxis: {
+            axisLabel: "Semester",
 			mode: "categories",
 			tickLength: 0
-		}
+		},
+        yaxis: {
+            axisLabel: "Modular Credits",
+            tickSize: 4
+        },
+        grid: {
+            markings: [
+                {
+                    color: 'rgba(0,0,0,0.4)',
+                    lineWidth:2,
+                    yaxis: { from: 20, to: 20 }
+                }
+            ]
+        }
     });
     
     var modulesByLevel = _.groupBy(modules, function(m) { return m.level });
@@ -243,9 +255,23 @@ $(function() {
 			}
 		},
 		xaxis: {
+            axisLabel: "Semester",
 			mode: "categories",
 			tickLength: 0
-		}
+		},
+        yaxis: {
+            axisLabel: "Modular Credits",
+            tickSize: 4
+        },
+        grid: {
+            markings: [
+                {
+                    color: 'rgba(0,0,0,0.4)',
+                    lineWidth:2,
+                    yaxis: { from: 20, to: 20 }
+                }
+            ]
+        }
     });
 });
 function module(id) {

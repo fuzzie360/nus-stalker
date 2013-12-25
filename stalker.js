@@ -76,7 +76,15 @@ app.get('/suggest', function(req, res) {
         where: ['displayName like ?', '%' + req.query.q + '%'],
         limit: 10
     }).success(function(results) {
-        res.json(_.pluck(results, 'displayName'));
+        var names = _.pluck(results, 'displayName');
+        var data = [];
+        for (var i=0; i<names.length; i++) {
+            data.push({
+                value: names[i],
+                tokens: names[i].split(' ')
+            });
+        }
+        res.json(data);
     });
 });
 
@@ -109,8 +117,23 @@ app.get('/person/:matric', function(req, res) {
         joinTableAttributes: ['year', 'semester']
     }).success(function(person) {
         person.getModules().success(function(modules) {
-            person.modules = modules;
-            res.render('person.ejs', { person:person });
+            // shim because sequelize many-to-many eager loading is broken
+            function iter(mods) {
+                if (_.isEmpty(mods)) {
+                    person.modules = modules;
+                    res.render('person.ejs', { person:person });
+                    return;
+                }
+                
+                var module = _.first(mods);
+                module.getModuleDepartment().success(function(d) {
+                    if (!d) return iter(_.rest(mods));
+                    
+                    module.moduleDepartment = d;
+                    iter(_.rest(mods));
+                });
+            }
+            iter(modules);
         }); 
     });
 });
@@ -124,8 +147,23 @@ app.get('/module/:code', function(req, res) {
         where: { code: req.params.code }
     }).success(function(module) {
         module.getStudents().success(function(students) {
-            module.students = students;
-            res.render('module.ejs', { module:module });
+            // shim because sequelize many-to-many eager loading is broken
+            function iter(stus) {
+                if (_.isEmpty(stus)) {
+                    module.students = students;
+                    res.render('module.ejs', { module:module });
+                    return;
+                }
+                
+                var student = _.first(stus);
+                student.getFaculties().success(function(f) {
+                    if (!f) return iter(_.rest(stus));
+                    
+                    student.faculties = f;
+                    iter(_.rest(stus));
+                });
+            }
+            iter(students);
         });
     })
 });

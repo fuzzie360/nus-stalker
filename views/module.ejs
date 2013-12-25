@@ -23,6 +23,7 @@ function appendChecksum(matric) {
             <th colspan="2">Semster</th>
             <th rowspan="2" class="group-letter-4">Matric</th>
             <th rowspan="2">Name</th>
+            <th rowspan="2" class="group-letter-99">Faculty</th>
         </tr>
         <tr>
             <th class="sorter-false group-letter-99">Year</th>
@@ -37,6 +38,7 @@ function appendChecksum(matric) {
                 <td><%= s.StudentModule.semester %></td>
                 <td style="text-transform:uppercase"><%= appendChecksum(s.matric) %></td>
                 <td><%= s.displayName %></td>
+                <td><%= s.faculties[0] ? s.faculties[0].name : '-' %></td>
             </tr>
         <% } %>
     </tbody>
