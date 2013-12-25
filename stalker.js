@@ -63,6 +63,7 @@ process.stdout.write('INFO:\tServer listening at port ' + config.server.port + '
 app.get('/', function(req, res) {
     if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
+        return;
     }
     res.render('main.ejs', { messages:req.flash('error') });
 });
@@ -76,6 +77,7 @@ function prependPlusToQuery(q) {
 app.get('/suggest', function(req, res) {
     if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
+        return;
     }
     
     /*Student.findAll({
@@ -103,11 +105,13 @@ app.get('/suggest', function(req, res) {
 app.get('/search', function(req, res) {
     if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
+        return;
     }
     
     if (!req.query.q || req.query.q.length < 4) {
         req.flash('error', 'Query is too short (must be at least 4 characters long)');
         res.redirect('/');
+        return;
     }
     
     /*Student.findAll({
@@ -140,6 +144,7 @@ app.get('/search', function(req, res) {
 app.get('/person/:matric', function(req, res) {
     if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
+        return;
     }
 
     Student.find({
@@ -172,6 +177,7 @@ app.get('/person/:matric', function(req, res) {
 app.get('/module/:code', function(req, res) {
     if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
+        return;
     }
     
     Module.find({
