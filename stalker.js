@@ -95,7 +95,7 @@ app.get('/search', function(req, res) {
     }
     
     if (!req.query.q || req.query.q.length < 4) {
-        req.flash('error', 'Query is too short (must be longer than 5 characters)');
+        req.flash('error', 'Query is too short (must be at least 4 characters long)');
         res.redirect('/');
     }
     
