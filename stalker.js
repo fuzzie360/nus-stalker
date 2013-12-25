@@ -4,6 +4,7 @@ var http = require('http')
 
 var _ = require('underscore');
 var express = require('express');
+var flash = require('connect-flash');
 var ejs = require('ejs');
 var passport = require('passport');
 var OpenIDStrategy = require('passport-openid').Strategy;
@@ -18,7 +19,6 @@ var Module = Models.Module;
 var Career = Models.Career;
 var Faculty = Models.Faculty;
 var Course = Models.Course;
-var StudentModule = Models.StudentModule;
 
 var auth = true;
 
@@ -51,6 +51,7 @@ app.use(express.static('public'));
 app.use(express.cookieParser());
 app.use(express.bodyParser());
 app.use(express.session({ secret: 'stalker' }));
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(app.router);
@@ -63,7 +64,7 @@ app.get('/', function(req, res) {
     if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
     }
-    res.render('main.ejs');
+    res.render('main.ejs', { messages:req.flash('error') });
 });
 
 app.get('/suggest', function(req, res) {
@@ -93,16 +94,26 @@ app.get('/search', function(req, res) {
         res.redirect('/login');
     }
     
+    if (!req.query.q || req.query.q.length < 4) {
+        req.flash('error', 'Query is too short (must be longer than 5 characters)');
+        res.redirect('/');
+    }
+    
     Student.findAll({
         where: ['displayName like ?', '%' + req.query.q + '%'],
-        include: [Faculty]
+        include: [Faculty],
+        limit: 200
     }).success(function(results) {
         if (results.length == 1) {
             res.redirect('/person/' + results[0].matric );
             return;
         }
         
-        res.render('results.ejs', { search:req.query.q, results:results });
+        res.render('results.ejs', {
+            search: req.query.q,
+            results: results,
+            truncated: results.length == 200
+        });
     });
 });
 

@@ -13,6 +13,12 @@ function appendChecksum(matric) {
 <div class="text-center">
     <h1>Search results for "<%= search %>"</h1>
 </div>
+<% if (truncated) { %>
+    <div class="alert alert-warning alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        Results have been truncated because there were too many
+    </div>
+<% } %>
 <table id="table-results" class="table table-hover tablesorter">
     <thead>
         <tr>
@@ -32,6 +38,8 @@ function appendChecksum(matric) {
     </tbody>
 </table>
 <a href="/" class="btn btn-default pull-right">Back</a>
+<div class="clearfix"></div>
+<br>
 <script>
 $(function() {
     $.extend($.tablesorter.themes.bootstrap, {
