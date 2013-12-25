@@ -32,7 +32,7 @@ function appendChecksum(matric) {
             <tr onclick="stalk('<%= results[i].matric %>');" class="table-hand">
                 <td style="text-transform:uppercase"><%= appendChecksum(results[i].matric) %></td>
                 <td><%= results[i].displayName %></td>
-                <td><%= results[i].faculties[0] ? results[i].faculties[0].name : '-' %></td>
+                <td><%= results[i].faculties.name ? results[i].faculties.name : '-' %></td>
             </tr>
         <% } %>
     </tbody>
@@ -72,7 +72,7 @@ $(function() {
 			group_separator : '-'
 		}
         
-	}).highlight("<%= search %>");
+	}).highlight("<%= search %>".split(' '));
 });
 function stalk(id) {
     window.location.href = '/person/' + id;

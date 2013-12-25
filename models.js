@@ -2,7 +2,7 @@ module.exports = function(sequelize, DataTypes) {
     var Student = sequelize.define('Student', {
         dn: DataTypes.STRING,
         matric: DataTypes.STRING,
-        displayName: DataTypes.STRING,
+        displayName: DataTypes.TEXT,
         firstName: DataTypes.STRING,
         lastName: DataTypes.STRING,
         email: DataTypes.STRING,

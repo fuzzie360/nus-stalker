@@ -20,7 +20,7 @@ var Career = Models.Career;
 var Faculty = Models.Faculty;
 var Course = Models.Course;
 
-var auth = true;
+var auth = false;
 
 passport.serializeUser(function(user, done) {
     done(null, user);
@@ -67,16 +67,27 @@ app.get('/', function(req, res) {
     res.render('main.ejs', { messages:req.flash('error') });
 });
 
+function prependPlusToQuery(q) {
+    return _.map(q.split(' '), function(x) {
+        return '+'+x;
+    }).join(' ');
+}
+
 app.get('/suggest', function(req, res) {
     if (auth && !req.isAuthenticated()) {
         res.redirect('/login');
     }
     
-    Student.findAll({
+    /*Student.findAll({
         attributes: ['displayName'],
         where: ['displayName like ?', '%' + req.query.q + '%'],
         limit: 10
-    }).success(function(results) {
+    })*/
+    sequelize.query('SELECT displayName,'
+    +' MATCH (displayName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
+    +' WHERE MATCH (displayName) AGAINST (? IN BOOLEAN MODE)'
+    +' ORDER BY relevance DESC LIMIT 10', null, { raw:true }, [req.query.q+'*', prependPlusToQuery(req.query.q+'*')])
+    .success(function(results) {
         var names = _.pluck(results, 'displayName');
         var data = [];
         for (var i=0; i<names.length; i++) {
@@ -99,11 +110,20 @@ app.get('/search', function(req, res) {
         res.redirect('/');
     }
     
-    Student.findAll({
-        where: ['displayName like ?', '%' + req.query.q + '%'],
+    /*Student.findAll({
+        where: ['MATCH (displayName) AGAINST (? IN BOOLEAN MODE)', req.query.q],
         include: [Faculty],
-        limit: 200
-    }).success(function(results) {
+        limit: 200,
+    })*/
+    sequelize.query('SELECT Students.*, Faculties.name AS `faculties.name`,'
+    + ' Faculties.id AS `faculties.id`, Faculties.createdAt AS `faculties.createdAt`,'
+    + ' Faculties.updatedAt AS `faculties.updatedAt`,'
+    + ' MATCH (displayName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
+    + ' LEFT OUTER JOIN StudentFaculties ON Students.id = StudentFaculties.StudentId'
+    + ' LEFT OUTER JOIN Faculties AS faculties ON Faculties.id = StudentFaculties.FacultyId'
+    + ' WHERE MATCH (displayName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3'
+    + ' ORDER BY relevance DESC LIMIT 200', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
+    .success(function(results) {
         if (results.length == 1) {
             res.redirect('/person/' + results[0].matric );
             return;
