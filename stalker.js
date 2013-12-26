@@ -21,7 +21,7 @@ var Career = Models.Career;
 var Faculty = Models.Faculty;
 var Course = Models.Course;
 
-var auth = false;
+var auth = true;
 
 passport.serializeUser(function(user, done) {
     done(null, user);
