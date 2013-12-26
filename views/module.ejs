@@ -17,6 +17,12 @@ function appendChecksum(matric) {
 <p>
     <%= module.description ? module.description : "No description available" %>
 </p>
+
+<h3>Students By Faculty</h3>
+<div class="thumbnail chart">
+    <div id="students-by-faculty-chart" style="height:300px"></div>
+</div>
+
 <h3>Students (<%= module.students.length %>)</h3>
 <table id="table-students" class="table table-hover tablesorter">
     <thead>
@@ -44,6 +50,21 @@ function appendChecksum(matric) {
         <% } %>
     </tbody>
 </table>
+
+<form class="form-inline" id="table-students-pagination">
+    <div class="form-group">
+        <ul class="pagination">
+            <li class="prev"><a href="#">&laquo;</a></li>
+        </ul>
+        <ul class="pagination pages">
+        
+        </ul>
+        <ul class="pagination">
+            <li class="next"><a href="#">&raquo;</a></li>
+        </ul>
+    </div>
+</form>
+
 <div class="pull-right">
     <button onclick="history.back()"  class="btn btn-default">Back</button>
     <a href="/" class="btn btn-primary">New Search</a>
@@ -82,7 +103,117 @@ $(function() {
 			group_separator : '-'
 		},
         sortList: [[0,1],[1,1],[2,0]]
-	});
+	}).on('pagerInitialized pagerComplete', function (e, c) {
+        var i, pages = '', t = [],
+            cur = c.page + 1,
+            start = cur > 1 ? (c.totalPages - cur < 3 ? -3 + (c.totalPages - cur) : -1) : 0,
+            end = cur < 3 ? 5 - cur : 2;
+        for (i = start; i < end; i++) {
+            if (cur + i >= 1 && cur + i < c.totalPages) { t.push( cur + i ); }
+        }
+        // make sure first and last page are included in the pagination
+        if ($.inArray(1, t) === -1) { t.push(1); }
+        if ($.inArray(c.totalPages, t) === -1) { t.push(c.totalPages); }
+        // sort the list
+        t = t.sort(function(a, b){ return a - b; });
+        // make links and spacers
+        $.each(t, function(j, v){
+            pages += '<li class="' + (v === cur ? 'active' : '') + '"><a href="#">'+v+'</a></li>';
+            pages += j < t.length - 1 && ( t[j+1] - 1 !== v ) ? '<li class="disabled"><a href="#">...</a></li>' : '';
+        });
+        $('#table-students-pagination .pages').html(pages);
+    }).tablesorterPager({
+        container: $('#table-students-pagination'),
+        size: 10,
+        output: 'showing: {startRow} to {endRow} ({totalRows})'
+    });
+    
+    $('.pagination').on('click', 'a', function() {
+        $(this).addClass('active').siblings().removeClass('active');
+        $('#table-students').trigger('pageSet', $(this).html());
+        return false;
+    });
+    
+    var students = [
+    <% for (var i=0; i<module.students.length; i++){ %>
+        <% var s = module.students[i] %>
+        {
+            semester: "<%= 2000 + s.StudentModule.year %> Sem <%= s.StudentModule.semester %>",
+            faculty: "<%= s.faculties[0] ? s.faculties[0].name : 'No Faculty' %>"
+        },
+    <% } %> 
+    ];
+    
+    studentsByFaculty = _.groupBy(students, function(s) { return s.faculty });
+    var sems = [];
+    for (var fac in studentsByFaculty) {
+        studentsByFaculty[fac] = _.countBy(studentsByFaculty[fac], function(m) {
+            return m.semester
+        })
+    
+        sems = _.union(sems, _.keys(studentsByFaculty[fac]));
+    }
+
+    // remove manually inserted values
+    sems = _.without(sems, '2012 Sem 1', '2012 Sem 2');
+    
+    for (var fac in studentsByFaculty) {
+        delete studentsByFaculty[fac]['2012 Sem 1'];
+        delete studentsByFaculty[fac]['2012 Sem 2'];
+        
+        sems.forEach(function(sem) {
+            studentsByFaculty[fac][sem] =studentsByFaculty[fac][sem] ? studentsByFaculty[fac][sem] : 0;
+        });
+        studentsByFaculty[fac] = _.pairs(studentsByFaculty[fac]);
+    }
+
+    var dataByFaculty = [];
+
+    if (sems.length > 1) {
+        for (var fac in studentsByFaculty) {
+            dataByFaculty.push({
+                data: _.sortBy(studentsByFaculty[fac], function(d){ return d[0] }),
+                label: fac
+            })
+        }
+
+    	$.plot('#students-by-faculty-chart', dataByFaculty, {
+            series: {
+                stack: true,
+                bars: {
+    				show: true,
+    				barWidth: 0.6,
+                    align: "center"
+    			}
+    		},
+    		xaxis: {
+                axisLabel: "Semester",
+    			mode: "categories",
+    			tickLength: 0
+    		},
+            yaxis: {
+                axisLabel: "Students"
+            },
+        });
+    } else {
+        for (var fac in studentsByFaculty) {
+            dataByFaculty.push({
+                data: studentsByFaculty[fac],
+                label: fac
+            })
+        }
+        
+    	$.plot('#students-by-faculty-chart', dataByFaculty, {
+            series: {
+                pie: {
+                    show: true,
+                    combine: {
+                        threshold: 0.01
+                    }
+                }
+    		}
+        });
+    }
 });
 function stalk(id) {
     window.location.href = '/person/' + id;

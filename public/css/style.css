@@ -132,3 +132,6 @@ tr:last-of-type td:last-child {
     -moz-background-clip: padding;
     background-clip: padding-box;
 }
+.chart {
+    padding:20px
+}

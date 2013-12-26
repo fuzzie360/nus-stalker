@@ -91,10 +91,14 @@ function appendChecksum(matric) {
     </table>
 
     <h3>Modules By Department</h3>
-    <div id="module-by-dept-chart" style="height:300px"></div>
-
+    <div class="thumbnail chart">
+        <div id="module-by-dept-chart" style="height:300px"></div>
+    </div>
+    
     <h3>Modules By Level</h3>
-    <div id="module-by-level-chart" style="height:300px"></div>
+    <div class="thumbnail chart">
+        <div id="module-by-level-chart" style="height:300px"></div>
+    </div>
     
     <script>
     $(function() {
@@ -175,41 +179,61 @@ function appendChecksum(matric) {
     
         var dataByDept = [];
     
-        for (var dept in modulesByDept) {
-            dataByDept.push({
-                data: _.sortBy(modulesByDept[dept], function(d){ return d[0] }),
-                label: dept
-            })
-        }
-    
-    	$.plot('#module-by-dept-chart', dataByDept, {
-            series: {
-                stack: true,
-                bars: {
-    				show: true,
-    				barWidth: 0.6,
-                    align: "center"
-    			}
-    		},
-    		xaxis: {
-                axisLabel: "Semester",
-    			mode: "categories",
-    			tickLength: 0
-    		},
-            yaxis: {
-                axisLabel: "Modular Credits",
-                tickSize: 4
-            },
-            grid: {
-                markings: [
-                    {
-                        color: 'rgba(0,0,0,0.4)',
-                        lineWidth:2,
-                        yaxis: { from: 20, to: 20 }
-                    }
-                ]
+        if (sems.length > 1) {
+            for (var dept in modulesByDept) {
+                dataByDept.push({
+                    data: _.sortBy(modulesByDept[dept], function(d){ return d[0] }),
+                    label: dept
+                })
             }
-        });
+    
+        	$.plot('#module-by-dept-chart', dataByDept, {
+                series: {
+                    stack: true,
+                    bars: {
+        				show: true,
+        				barWidth: 0.6,
+                        align: "center"
+        			}
+        		},
+        		xaxis: {
+                    axisLabel: "Semester",
+        			mode: "categories",
+        			tickLength: 0
+        		},
+                yaxis: {
+                    axisLabel: "Modular Credits",
+                    tickSize: 4
+                },
+                grid: {
+                    markings: [
+                        {
+                            color: 'rgba(0,0,0,0.4)',
+                            lineWidth:2,
+                            yaxis: { from: 20, to: 20 }
+                        }
+                    ]
+                }
+            });
+        } else {
+            for (var dept in modulesByDept) {
+                dataByDept.push({
+                    data: modulesByDept[dept],
+                    label: dept
+                })
+            }
+    
+        	$.plot('#module-by-dept-chart', dataByDept, {
+                series: {
+                    pie: {
+                        show: true,
+                        combine: {
+                            threshold: 0.01
+                        }
+                    }
+        		}
+            });
+        }
     
         var modulesByLevel = _.groupBy(modules, function(m) { return m.level });
         var levels = [];
@@ -233,42 +257,62 @@ function appendChecksum(matric) {
     
         var dataByLevel = [];
     
-        for (var level in modulesByLevel) {
-            dataByLevel.push({
-                data: _.sortBy(modulesByLevel[level], function(d){ return d[0] }),
-                label: "Level " + level
-            })
-        }
-    
-    
-    	$.plot("#module-by-level-chart", dataByLevel, {
-            series: {
-                stack: true,
-                bars: {
-    				show: true,
-    				barWidth: 0.6,
-                    align: "center"
-    			}
-    		},
-    		xaxis: {
-                axisLabel: "Semester",
-    			mode: "categories",
-    			tickLength: 0
-    		},
-            yaxis: {
-                axisLabel: "Modular Credits",
-                tickSize: 4
-            },
-            grid: {
-                markings: [
-                    {
-                        color: 'rgba(0,0,0,0.4)',
-                        lineWidth:2,
-                        yaxis: { from: 20, to: 20 }
-                    }
-                ]
+        if (sems.length > 1) {
+            for (var level in modulesByLevel) {
+                dataByLevel.push({
+                    data: _.sortBy(modulesByLevel[level], function(d){ return d[0] }),
+                    label: "Level " + level
+                })
             }
-        });
+    
+    
+        	$.plot("#module-by-level-chart", dataByLevel, {
+                series: {
+                    stack: true,
+                    bars: {
+        				show: true,
+        				barWidth: 0.6,
+                        align: "center"
+        			}
+        		},
+        		xaxis: {
+                    axisLabel: "Semester",
+        			mode: "categories",
+        			tickLength: 0
+        		},
+                yaxis: {
+                    axisLabel: "Modular Credits",
+                    tickSize: 4
+                },
+                grid: {
+                    markings: [
+                        {
+                            color: 'rgba(0,0,0,0.4)',
+                            lineWidth:2,
+                            yaxis: { from: 20, to: 20 }
+                        }
+                    ]
+                }
+            });
+        } else {
+           for (var level in modulesByLevel) {
+                dataByLevel.push({
+                    data: modulesByLevel[level],
+                    label: level
+                })
+            }
+        
+        	$.plot('#module-by-level-chart', dataByLevel, {
+                series: {
+                    pie: {
+                        show: true,
+                        combine: {
+                            threshold: 0.01
+                        }
+                    }
+        		}
+            });
+        }
     });
     function module(id) {
         window.location.href = '/module/' + id;
