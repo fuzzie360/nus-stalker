@@ -74,9 +74,9 @@ module.exports = function(sequelize, DataTypes) {
     return {
         Student: Student,
         Module: Module,
+        ModuleDepartment: ModuleDepartment,
         Career: Career,
         Faculty: Faculty,
-        Course: Course,
-        StudentModule: StudentModule
+        Course: Course
     };
 }

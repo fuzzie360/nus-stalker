@@ -16,6 +16,7 @@ var Models = sequelize.import(__dirname + '/models.js');
 
 var Student = Models.Student;
 var Module = Models.Module;
+var ModuleDepartment = Models.ModuleDepartment;
 var Career = Models.Career;
 var Faculty = Models.Faculty;
 var Course = Models.Course;
@@ -181,8 +182,10 @@ app.get('/module/:code', function(req, res) {
     }
     
     Module.find({
-        where: { code: req.params.code }
+        where: { code: req.params.code },
+        include: [ModuleDepartment]
     }).success(function(module) {
+        console.dir(module);
         module.getStudents().success(function(students) {
             // shim because sequelize many-to-many eager loading is broken
             function iter(stus) {

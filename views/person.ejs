@@ -59,6 +59,18 @@ function appendChecksum(matric) {
             </ul>
         </td>
     </tr>
+    <% 
+        var now = new Date();
+        var hasAyStarted = !(now.getMonth() < 8);
+        var refYear = now.getFullYear();
+        refYear = hasAyStarted ? refYear : refYear-1;
+    %>
+    <tr>
+        <th>Year</th>
+        <td>
+            <%= person.enrolledOn ? 'Year ' + (refYear - person.enrolledOn + 1) : 'Unknown' %>
+        </td>
+    </tr>
 </table>
 
 <% if (person.modules.length > 0) { %>
@@ -98,7 +110,7 @@ function appendChecksum(matric) {
     <h3>Modules By Level</h3>
     <div class="thumbnail chart">
         <div id="module-by-level-chart" style="height:300px"></div>
-    </div>
+    </d>
     
     <script>
     $(function() {
@@ -132,6 +144,10 @@ function appendChecksum(matric) {
     		},
             sortList: [[0,1],[1,1],[2,0]]
     	});
+        
+        function labelFormatter(label, series) {
+    		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color:white;'>" + Math.round(series.percent) + "%</div>";
+    	}
     
         var modules = [
         <% for (var i=0; i<person.modules.length; i++){ %>
@@ -186,6 +202,10 @@ function appendChecksum(matric) {
                     label: dept
                 })
             }
+            
+            dataByDept = _.sortBy(dataByDept, function(y) {
+                return y.label;
+            });
     
         	$.plot('#module-by-dept-chart', dataByDept, {
                 series: {
@@ -212,7 +232,9 @@ function appendChecksum(matric) {
                             lineWidth:2,
                             yaxis: { from: 20, to: 20 }
                         }
-                    ]
+                    ],
+                    hoverable: true,
+                    clickable: true
                 }
             });
         } else {
@@ -222,6 +244,10 @@ function appendChecksum(matric) {
                     label: dept
                 })
             }
+            
+            dataByDept = _.sortBy(dataByDept, function(y) {
+                return y.label;
+            });
     
         	$.plot('#module-by-dept-chart', dataByDept, {
                 series: {
@@ -229,9 +255,19 @@ function appendChecksum(matric) {
                         show: true,
                         combine: {
                             threshold: 0.01
+                        },
+                        radius: 1,
+                        label: {
+                            show: true,
+                            radius: 2/3,
+                            formatter: labelFormatter
                         }
                     }
-        		}
+        		},
+                grid: {
+                    hoverable: true,
+                    clickable: true
+                }
             });
         }
     
@@ -264,7 +300,10 @@ function appendChecksum(matric) {
                     label: "Level " + level
                 })
             }
-    
+            
+            dataByLevel = _.sortBy(dataByLevel, function(y) {
+                return y.label;
+            });
     
         	$.plot("#module-by-level-chart", dataByLevel, {
                 series: {
@@ -291,7 +330,9 @@ function appendChecksum(matric) {
                             lineWidth:2,
                             yaxis: { from: 20, to: 20 }
                         }
-                    ]
+                    ],
+                    hoverable: true,
+                    clickable: true
                 }
             });
         } else {
@@ -301,6 +342,10 @@ function appendChecksum(matric) {
                     label: level
                 })
             }
+            
+            dataByLevel = _.sortBy(dataByLevel, function(y) {
+                return y.label;
+            });
         
         	$.plot('#module-by-level-chart', dataByLevel, {
                 series: {
@@ -308,9 +353,19 @@ function appendChecksum(matric) {
                         show: true,
                         combine: {
                             threshold: 0.01
+                        },
+                        radius: 1,
+                        label: {
+                            show: true,
+                            radius: 2/3,
+                            formatter: labelFormatter
                         }
                     }
-        		}
+        		},
+                grid: {
+                    hoverable: true,
+                    clickable: true
+                }
             });
         }
     });

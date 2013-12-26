@@ -13,6 +13,12 @@ function appendChecksum(matric) {
 <div class="text-center">
     <h1><%= module.code %> <%= module.name %></h1>
 </div>
+
+<h3>Department</h3>
+<p>
+    <%= module.moduleDepartment.name ? module.moduleDepartment.name : "No department" %>
+</p>
+
 <h3>Description</h3>
 <p>
     <%= module.description ? module.description : "No description available" %>
@@ -21,6 +27,11 @@ function appendChecksum(matric) {
 <h3>Students By Faculty</h3>
 <div class="thumbnail chart">
     <div id="students-by-faculty-chart" style="height:300px"></div>
+</div>
+
+<h3>Students By Year</h3>
+<div class="thumbnail chart">
+    <div id="students-by-year-chart" style="height:300px"></div>
 </div>
 
 <h3>Students (<%= module.students.length %>)</h3>
@@ -134,17 +145,26 @@ $(function() {
         return false;
     });
     
+    <% 
+        var now = new Date();
+        var hasAyStarted = !(now.getMonth() < 8);
+        var refYear = now.getFullYear();
+        refYear = hasAyStarted ? refYear : refYear-1;
+    %>
+    
     var students = [
     <% for (var i=0; i<module.students.length; i++){ %>
         <% var s = module.students[i] %>
         {
+            name: "<%= s.displayName %>",
             semester: "<%= 2000 + s.StudentModule.year %> Sem <%= s.StudentModule.semester %>",
-            faculty: "<%= s.faculties[0] ? s.faculties[0].name : 'No Faculty' %>"
+            faculty: "<%= s.faculties[0] ? s.faculties[0].name : 'No Faculty' %>",      
+            year: "<%= s.enrolledOn ? 'Year ' + (refYear - s.enrolledOn + 1) : 'Unknown' %>"
         },
     <% } %> 
     ];
     
-    studentsByFaculty = _.groupBy(students, function(s) { return s.faculty });
+    var studentsByFaculty = _.groupBy(students, function(s) { return s.faculty });
     var sems = [];
     for (var fac in studentsByFaculty) {
         studentsByFaculty[fac] = _.countBy(studentsByFaculty[fac], function(m) {
@@ -176,6 +196,10 @@ $(function() {
                 label: fac
             })
         }
+        
+        dataByFaculty = _.sortBy(dataByFaculty, function(y) {
+            return y.label;
+        });
 
     	$.plot('#students-by-faculty-chart', dataByFaculty, {
             series: {
@@ -203,16 +227,127 @@ $(function() {
             })
         }
         
+        function labelFormatter(label, series) {
+    		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color:white;'>" + Math.round(series.percent) + "%</div>";
+    	}
+        
+        dataByFaculty = _.sortBy(dataByFaculty, function(y) {
+            return y.label;
+        });
+        
     	$.plot('#students-by-faculty-chart', dataByFaculty, {
             series: {
                 pie: {
                     show: true,
                     combine: {
                         threshold: 0.01
+                    },
+                    radius: 1,
+                    label: {
+                        show: true,
+                        radius: 2/3,
+                        formatter: labelFormatter
                     }
                 }
-    		}
+    		},
+            grid: {
+                hoverable: true,
+                clickable: true
+            }
+        })
+    }
+    
+    var studentsByYear = _.groupBy(students, function(s) { return s.year });
+    sems = [];
+    for (var year in studentsByYear) {
+        studentsByYear[year] = _.countBy(studentsByYear[year], function(m) {
+            return m.semester
+        })
+    
+        sems = _.union(sems, _.keys(studentsByYear[year]));
+    }
+    
+    // remove manually inserted values
+    sems = _.without(sems, '2012 Sem 1', '2012 Sem 2');
+    
+    for (var year in studentsByYear) {
+        delete studentsByYear[year]['2012 Sem 1'];
+        delete studentsByYear[year]['2012 Sem 2'];
+        
+        sems.forEach(function(sem) {
+            studentsByYear[year][sem] =studentsByYear[year][sem] ? studentsByYear[year][sem] : 0;
         });
+        studentsByYear[year] = _.pairs(studentsByYear[year]);
+    }
+
+    var dataByYear = [];
+    
+    if (sems.length > 1) {
+        for (var year in studentsByYear) {
+            dataByYear.push({
+                data: _.sortBy(studentsByYear[year], function(d){ return d[0] }),
+                label: year
+            })
+        }
+        
+        dataByYear = _.sortBy(dataByYear, function(y) {
+            return y.label;
+        });
+
+    	$.plot('#students-by-year-chart', dataByYear, {
+            series: {
+                stack: true,
+                bars: {
+    				show: true,
+    				barWidth: 0.6,
+                    align: "center"
+    			}
+    		},
+    		xaxis: {
+                axisLabel: "Semester",
+    			mode: "categories",
+    			tickLength: 0
+    		},
+            yaxis: {
+                axisLabel: "Students"
+            },
+        });
+    } else {
+        for (var year in studentsByYear) {
+            dataByYear.push({
+                data: studentsByYear[year],
+                label: year
+            })
+        }
+        
+        dataByYear = _.sortBy(dataByYear, function(y) {
+            return y.label;
+        });
+        
+        function labelFormatter(label, series) {
+    		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color:white;'>" + Math.round(series.percent) + "%</div>";
+    	}
+        
+    	$.plot('#students-by-year-chart', dataByYear, {
+            series: {
+                pie: {
+                    show: true,
+                    combine: {
+                        threshold: 0.01
+                    },
+                    radius: 1,
+                    label: {
+                        show: true,
+                        radius: 2/3,
+                        formatter: labelFormatter
+                    }
+                }
+    		},
+            grid: {
+                hoverable: true,
+                clickable: true
+            }
+        })
     }
 });
 function stalk(id) {
