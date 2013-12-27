@@ -3,8 +3,8 @@ module.exports = function(sequelize, DataTypes) {
         dn: DataTypes.STRING,
         matric: DataTypes.STRING,
         displayName: DataTypes.TEXT,
-        firstName: DataTypes.STRING,
-        lastName: DataTypes.STRING,
+        firstName: DataTypes.TEXT,
+        lastName: DataTypes.TEXT,
         email: DataTypes.STRING,
         forwardTo: DataTypes.STRING,
         enrolledOn: DataTypes.INTEGER
@@ -13,13 +13,13 @@ module.exports = function(sequelize, DataTypes) {
     var Module = sequelize.define('Module', {
         dn: DataTypes.STRING,
         code: DataTypes.STRING,
-        name: DataTypes.STRING,
+        name: DataTypes.TEXT,
         description: DataTypes.TEXT,
         mc: DataTypes.INTEGER
     });
     
     var ModuleDepartment = sequelize.define('ModuleDepartment', {
-        name: DataTypes.STRING
+        name: DataTypes.TEXT
     });
     
     Module.belongsTo(ModuleDepartment);
@@ -27,16 +27,16 @@ module.exports = function(sequelize, DataTypes) {
 
     var Career = sequelize.define('Career', {
         dn: DataTypes.STRING,
-        name: DataTypes.STRING,
+        name: DataTypes.TEXT,
     });
 
     var Faculty = sequelize.define('Faculty', {
-        name: DataTypes.STRING,
+        name: DataTypes.TEXT,
     });
 
     var Course = sequelize.define('Course', {
         dn: DataTypes.STRING,
-        name: DataTypes.STRING,
+        name: DataTypes.TEXT,
     });
 
     var StudentModule = sequelize.define('StudentModule', {

@@ -148,7 +148,7 @@ $(function() {
     <% 
         var now = new Date();
         var hasAyStarted = !(now.getMonth() < 8);
-        var refYear = now.getFullYear();
+        var refYear = now.getFullYear() - 2000;
         refYear = hasAyStarted ? refYear : refYear-1;
     %>
     
@@ -240,10 +240,11 @@ $(function() {
                 pie: {
                     show: true,
                     combine: {
-                        threshold: 0.01
+                        threshold: 0.001
                     },
                     radius: 1,
                     label: {
+                        threshold: 0.05,
                         show: true,
                         radius: 2/3,
                         formatter: labelFormatter
@@ -325,7 +326,7 @@ $(function() {
         });
         
         function labelFormatter(label, series) {
-    		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color:white;'>" + Math.round(series.percent) + "%</div>";
+    		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color: white'>" + Math.round(series.percent) + "%</div>";
     	}
         
     	$.plot('#students-by-year-chart', dataByYear, {
@@ -333,10 +334,11 @@ $(function() {
                 pie: {
                     show: true,
                     combine: {
-                        threshold: 0.01
+                        threshold: 0.001
                     },
                     radius: 1,
                     label: {
+                        threshold: 0.05,
                         show: true,
                         radius: 2/3,
                         formatter: labelFormatter
@@ -351,7 +353,7 @@ $(function() {
     }
 });
 function stalk(id) {
-    window.location.href = '/person/' + id;
+    window.location.href = '/student/' + id;
 }
 </script>
 <% include foot %>

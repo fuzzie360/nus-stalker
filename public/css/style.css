@@ -109,8 +109,17 @@ tr:last-of-type td:last-child {
 .tt-suggestion.tt-cursor a {
     color: #fff;
 }
-
 .tt-suggestion p {
+    margin: 0;
+}
+.tt-header {
+    display: block;
+    padding: 3px 20px;
+    text-transform: uppercase;
+    color: #bbb;
+    font-size: 7pt;
+}
+.tt-header p {
     margin: 0;
 }
 .tt-dropdown-menu {

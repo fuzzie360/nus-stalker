@@ -1,0 +1,1 @@
+Query OK, 41770 rows affected (0.42 sec)

@@ -21,8 +21,6 @@ var Career = Models.Career;
 var Faculty = Models.Faculty;
 var Course = Models.Course;
 
-var auth = true;
-
 passport.serializeUser(function(user, done) {
     done(null, user);
 });
@@ -62,49 +60,41 @@ server.listen(config.server.port, config.server.ip);
 process.stdout.write('INFO:\tServer listening at port ' + config.server.port + '\n');
 
 app.get('/', function(req, res) {
-    if (auth && !req.isAuthenticated()) {
-        res.redirect('/login');
-        return;
-    }
-    res.render('main.ejs', { messages:req.flash('error') });
-});
-
-function prependPlusToQuery(q) {
-    return _.map(q.split(' '), function(x) {
-        return '+'+x;
-    }).join(' ');
-}
-
-app.get('/suggest', function(req, res) {
-    if (auth && !req.isAuthenticated()) {
+    if (config.auth && !req.isAuthenticated()) {
         res.redirect('/login');
         return;
     }
     
-    /*Student.findAll({
-        attributes: ['displayName'],
-        where: ['displayName like ?', '%' + req.query.q + '%'],
-        limit: 10
-    })*/
-    sequelize.query('SELECT displayName,'
-    +' MATCH (displayName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
-    +' WHERE MATCH (displayName) AGAINST (? IN BOOLEAN MODE)'
-    +' ORDER BY relevance DESC LIMIT 10', null, { raw:true }, [req.query.q+'*', prependPlusToQuery(req.query.q+'*')])
-    .success(function(results) {
-        var names = _.pluck(results, 'displayName');
-        var data = [];
-        for (var i=0; i<names.length; i++) {
-            data.push({
-                value: names[i],
-                tokens: names[i].split(' ')
-            });
-        }
-        res.json(data);
+    var randoms = [
+        'ALL YOUR DATABASE ARE BELONG TO US',
+        'Nothing is beyond our reach',
+        'Protecting NUS from terrorists since 2013',
+        'Hide your kids, hide your wife',
+        'Wow. So stalk. Much creep.',
+        'You come here often, huh',
+        'Yep, this will definately make her love you',
+        'Now with 50% more stalk, per stalk',
+        'The Google of NUS',
+        'Has anyone really been far even as decided to use even go want to do look more like?',
+        'What does the fox say?',
+        'What\'s the meaning of Stongehenge?',
+        'Drive a Civic. It\s a car you can trust'
+    ];
+    res.render('main.ejs', {
+        messages: req.flash('error'),
+        random: _.sample(randoms)
     });
 });
 
+function prependPlusToQuery(q) {
+    return _.map(q.match(/\w+|"[^"]+"/g), function(x) {
+        if (x.length > 0 && x[0] == '-') return; 
+        return '+'+x;
+    }).join(' ');
+}
+
 app.get('/search', function(req, res) {
-    if (auth && !req.isAuthenticated()) {
+    if (config.auth && !req.isAuthenticated()) {
         res.redirect('/login');
         return;
     }
@@ -112,6 +102,11 @@ app.get('/search', function(req, res) {
     if (!req.query.q || req.query.q.length < 4) {
         req.flash('error', 'Query is too short (must be at least 4 characters long)');
         res.redirect('/');
+        return;
+    }
+    
+    if (req.query.q.toUpperCase().indexOf('DROP TABLE') != -1) {
+        res.redirect('/bobby.txt');
         return;
     }
     
@@ -123,27 +118,67 @@ app.get('/search', function(req, res) {
     sequelize.query('SELECT Students.*, faculties.name AS `faculties.name`,'
     + ' faculties.id AS `faculties.id`, faculties.createdAt AS `faculties.createdAt`,'
     + ' faculties.updatedAt AS `faculties.updatedAt`,'
-    + ' MATCH (displayName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
+    + ' MATCH (displayName, firstName, lastName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
     + ' LEFT OUTER JOIN StudentFaculties ON Students.id = StudentFaculties.StudentId'
     + ' LEFT OUTER JOIN Faculties AS faculties ON faculties.id = StudentFaculties.FacultyId'
-    + ' WHERE MATCH (displayName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3'
-    + ' ORDER BY relevance DESC LIMIT 200', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
+    + ' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3'
+    + ' ORDER BY relevance DESC LIMIT 100', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
     .success(function(results) {
         if (results.length == 1) {
-            res.redirect('/person/' + results[0].matric );
+            res.redirect('/student/' + results[0].matric );
             return;
         }
         
-        res.render('results.ejs', {
+        res.render('search.ejs', {
             search: req.query.q,
             results: results,
-            truncated: results.length == 200
+            truncated: results.length == 100
         });
     });
 });
 
-app.get('/person/:matric', function(req, res) {
-    if (auth && !req.isAuthenticated()) {
+app.get('/student/suggest', function(req, res) {
+    if (config.auth && !req.isAuthenticated()) {
+        res.redirect('/login');
+        return;
+    }
+    
+    /*Student.findAll({
+        attributes: ['displayName'],
+        where: ['displayName like ?', '%' + req.query.q + '%'],
+        limit: 10
+    })*/
+    sequelize.query('SELECT matric, displayName, firstName, lastName,'
+    +' MATCH (displayName, firstName, lastName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
+    +' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE)'
+    +' ORDER BY relevance DESC LIMIT 10', null, { raw:true }, [req.query.q+'*', prependPlusToQuery(req.query.q)+'*'])
+    .success(function(names) {
+        var data = [];
+        for (var i=0; i<names.length; i++) {
+            var orig = names[i].displayName;
+            var matric = names[i].matric;
+            var name = names[i].displayName || '';
+            var first = names[i].firstName || '';
+            var last = names[i].lastName || '';
+            
+            name = name.replace(/[^\w\s]/gi,'');
+            first = first.replace(/[^\w\s]/gi,'');
+            last = last.replace(/[^\w\s]/gi,'')
+            
+            var tokens = _.without(_.union(name.split(' '), first.split(' '), last.split(' ')), '');
+            
+            data.push({
+                value: orig,
+                tokens: tokens,
+                id: matric
+            });
+        }
+        res.json(data);
+    });
+});
+
+app.get('/student/:matric', function(req, res) {
+    if (config.auth && !req.isAuthenticated()) {
         res.redirect('/login');
         return;
     }
@@ -152,13 +187,18 @@ app.get('/person/:matric', function(req, res) {
         where: { matric: req.params.matric },
         include: [Career, Faculty, Course],
         joinTableAttributes: ['year', 'semester']
-    }).success(function(person) {
-        person.getModules().success(function(modules) {
+    }).success(function(student) {
+        if (!student) {
+            res.send(404);
+            return;
+        }
+        
+        student.getModules().success(function(modules) {
             // shim because sequelize many-to-many eager loading is broken
             function iter(mods) {
                 if (_.isEmpty(mods)) {
-                    person.modules = modules;
-                    res.render('person.ejs', { person:person });
+                    student.modules = modules;
+                    res.render('student.ejs', { student:student });
                     return;
                 }
                 
@@ -175,8 +215,41 @@ app.get('/person/:matric', function(req, res) {
     });
 });
 
+app.get('/module/suggest', function(req, res) {
+    if (config.auth && !req.isAuthenticated()) {
+        res.redirect('/login');
+        return;
+    }
+    
+    sequelize.query('SELECT code, name,'
+    +' MATCH (name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules'
+    +' WHERE MATCH (name) AGAINST (? IN BOOLEAN MODE) OR code LIKE ?'
+    +' OR CONCAT_WS(" ", code, name) LIKE ?'
+    +' ORDER BY relevance DESC LIMIT 10', null, { raw:true },
+    [
+        req.query.q+'*',
+        prependPlusToQuery(req.query.q)+'*',
+        req.query.q,
+        req.query.q+'%'
+    ]).success(function(modules) {
+        var data = [];
+        for (var i=0; i<modules.length; i++) {
+            var name = modules[i].name || '';
+            var code = modules[i].code;
+            var tokens = _.union(name.split(' '), code)
+            
+            data.push({
+                value: code + ' ' + name,
+                tokens: tokens,
+                id: code
+            });
+        }
+        res.json(data);
+    });
+});
+
 app.get('/module/:code', function(req, res) {
-    if (auth && !req.isAuthenticated()) {
+    if (config.auth && !req.isAuthenticated()) {
         res.redirect('/login');
         return;
     }
@@ -185,7 +258,11 @@ app.get('/module/:code', function(req, res) {
         where: { code: req.params.code },
         include: [ModuleDepartment]
     }).success(function(module) {
-        console.dir(module);
+        if (!module) {
+            res.send(404);
+            return;
+        }
+        
         module.getStudents().success(function(students) {
             // shim because sequelize many-to-many eager loading is broken
             function iter(stus) {
@@ -209,7 +286,7 @@ app.get('/module/:code', function(req, res) {
 });
 
 app.get('/login', function(req, res) {
-    if (!auth || req.isAuthenticated()) {
+    if (!config.auth || req.isAuthenticated()) {
         res.redirect('/');
         return;
     }

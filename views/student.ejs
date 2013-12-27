@@ -11,30 +11,30 @@ function appendChecksum(matric) {
 }
 %>
 <div class="text-center">
-    <h1><%= person.displayName %></h1>
+    <h1><%= student.displayName %></h1>
 </div>
     
 <table class="table">
     <tr>
         <th>Matric</th>
-        <td style="text-transform:uppercase"><%= appendChecksum(person.matric) %></td>
+        <td style="text-transform:uppercase"><%= appendChecksum(student.matric) %></td>
     </tr>
     <tr>
         <th>Email</th>
-        <td><%= person.email %></td>
+        <td><%= student.email %></td>
     </tr>
-    <% if (person.forwardTo) { %>
+    <% if (student.forwardTo) { %>
     <tr>
         <th>Forwarded to</th>
-        <td><%= person.forwardTo ? person.forwardTo : '-' %></td>
+        <td><%= student.forwardTo ? student.forwardTo : '-' %></td>
     </tr>
     <% } %>
     <tr>
         <th>Career</th>
         <td>
             <ul>
-                <% for (var i=0; i<person.careers.length; i++){ %>
-                    <li><%= person.careers[i].name %></li>
+                <% for (var i=0; i<student.careers.length; i++){ %>
+                    <li><%= student.careers[i].name %></li>
                 <% } %>
             </ul>
         </td>
@@ -43,8 +43,8 @@ function appendChecksum(matric) {
         <th>Faculty</th>
         <td>
             <ul>
-                <% for (var i=0; i<person.faculties.length; i++){ %>
-                    <li><%= person.faculties[i].name %></li>
+                <% for (var i=0; i<student.faculties.length; i++){ %>
+                    <li><%= student.faculties[i].name %></li>
                 <% } %>
             </ul>
         </td>
@@ -53,8 +53,8 @@ function appendChecksum(matric) {
         <th>Course</th>
         <td>
             <ul>
-                <% for (var i=0; i<person.courses.length; i++){ %>
-                    <li><%= person.courses[i].name %></li>
+                <% for (var i=0; i<student.courses.length; i++){ %>
+                    <li><%= student.courses[i].name %></li>
                 <% } %>
             </ul>
         </td>
@@ -62,18 +62,18 @@ function appendChecksum(matric) {
     <% 
         var now = new Date();
         var hasAyStarted = !(now.getMonth() < 8);
-        var refYear = now.getFullYear();
+        var refYear = now.getFullYear() - 2000;
         refYear = hasAyStarted ? refYear : refYear-1;
     %>
     <tr>
         <th>Year</th>
         <td>
-            <%= person.enrolledOn ? 'Year ' + (refYear - person.enrolledOn + 1) : 'Unknown' %>
+            <%= student.enrolledOn ? 'Year ' + (refYear - student.enrolledOn + 1) : 'Unknown' %>
         </td>
     </tr>
 </table>
 
-<% if (person.modules.length > 0) { %>
+<% if (student.modules.length > 0) { %>
     <h3>Module History</h3>
     <table id="table-modules" class="table">
         <thead>
@@ -89,8 +89,8 @@ function appendChecksum(matric) {
             </tr>
         </thead>
         <tbody>
-            <% for (var i=0; i<person.modules.length; i++){ %>
-                <% var m = person.modules[i] %>
+            <% for (var i=0; i<student.modules.length; i++){ %>
+                <% var m = student.modules[i] %>
                 <tr onclick="module('<%= m.code %>');" class="table-hand">
                     <td><%= 2000 + m.StudentModule.year %> <span style="display:none"> Semester <%= m.StudentModule.semester %></span></td>
                     <td><%= m.StudentModule.semester %></td>
@@ -110,7 +110,7 @@ function appendChecksum(matric) {
     <h3>Modules By Level</h3>
     <div class="thumbnail chart">
         <div id="module-by-level-chart" style="height:300px"></div>
-    </d>
+    </div>
     
     <script>
     $(function() {
@@ -150,8 +150,8 @@ function appendChecksum(matric) {
     	}
     
         var modules = [
-        <% for (var i=0; i<person.modules.length; i++){ %>
-            <% var m = person.modules[i] %>
+        <% for (var i=0; i<student.modules.length; i++){ %>
+            <% var m = student.modules[i] %>
             {
                 semester: "<%= 2000 + m.StudentModule.year %> Sem <%= m.StudentModule.semester %>",
                 mc: <%= m.mc %>,
