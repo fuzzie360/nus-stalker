@@ -10,6 +10,7 @@ var passport = require('passport');
 var OpenIDStrategy = require('passport-openid').Strategy;
 var mysql = require('mysql');
 var Sequelize = require('sequelize');
+var MySQLSessionStore = require('connect-mysql-session')(express);
 
 var sequelize = new Sequelize(config.db.database, config.db.user, config.db.pass, config.db.opt);
 var Models = sequelize.import(__dirname + '/models.js');
@@ -49,7 +50,10 @@ app.engine('html', ejs.renderFile);
 app.use(express.static('public'));
 app.use(express.cookieParser());
 app.use(express.bodyParser());
-app.use(express.session({ secret: 'stalker' }));
+app.use(express.session({
+    store: new MySQLSessionStore(config.db.database, config.db.user, config.db.pass),
+    secret: config.session.secret
+}));
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
