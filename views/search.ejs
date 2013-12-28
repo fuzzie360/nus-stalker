@@ -10,33 +10,67 @@ function appendChecksum(matric) {
   return matric + table[sum%13];
 }
 %>
-<div class="text-center">
-    <h1>Search results for "<%= search %>"</h1>
-</div>
+<% include searchWidget %>
 <% if (truncated) { %>
     <div class="alert alert-warning alert-dismissable">
         <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
         Results have been truncated because there were too many
     </div>
 <% } %>
-<table id="table-results" class="table table-hover tablesorter">
-    <thead>
-        <tr>
-            <th>Matric</th>
-            <th>Name</th>
-            <th>Faculty</th>
-        </tr>
-    </thead>
-    <tbody>
-        <% for (var i=0; i<results.length; i++) { %>
-            <tr onclick="stalk('<%= results[i].matric %>');" class="table-hand">
-                <td style="text-transform:uppercase"><%= appendChecksum(results[i].matric) %></td>
-                <td><%= results[i].displayName %></td>
-                <td><%= results[i].faculties.name ? results[i].faculties.name : '-' %></td>
+<% if (modules.length > 0 ) { %>
+    <h3>Modules</h3>
+    <table id="table-modules" class="table table-hover">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>MCs</th>
             </tr>
-        <% } %>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            <% for (var i=0; i<modules.length; i++) { %>
+                <% var m = modules[i] %>
+                <tr onclick="module('<%= modules[i].code %>');" class="table-hand">
+                    <td style="text-transform:uppercase"><%= m.code %></td>
+                    <td><%= m.name %></td>
+                    <td><%= m.department.name ? m.department.name : '-' %></td>
+                    <td><%= m.mc %></td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+<% } %>
+<% if (students.length > 0 ) { %>
+    <h3>Students</h3>
+    <table id="table-students" class="table table-hover">
+        <thead>
+            <tr>
+                <th>Matric</th>
+                <th>Name</th>
+                <th>Faculty</th>
+                <th>Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% 
+                var now = new Date();
+                var hasAyStarted = !(now.getMonth() < 8);
+                var refYear = now.getFullYear() - 2000;
+                refYear = hasAyStarted ? refYear : refYear-1;
+            %>
+            <% for (var i=0; i<students.length; i++) { %>
+                <% var s = students[i] %>
+                <tr onclick="student('<%= s.matric %>');" class="table-hand">
+                    <td style="text-transform:uppercase"><%= appendChecksum(s.matric) %></td>
+                    <td><%= s.displayName %></td>
+                    <td><%= s.faculties.name ? s.faculties.name : '-' %></td>
+                    <td><%= s.enrolledOn ? (refYear - s.enrolledOn + 1) : '?' %></td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+<% } %>
 <a href="/" class="btn btn-default pull-right">Back</a>
 <div class="clearfix"></div>
 <br>
@@ -61,7 +95,7 @@ $(function() {
         odd        : ''  // even row zebra striping
     });
       
-    $('#table-results').tablesorter({
+    var opt = {
 		theme: 'bootstrap',
         widthFixed: true,
         headerTemplate : '{content} {icon}',
@@ -71,11 +105,10 @@ $(function() {
             filter_reset : '.reset',
 			group_separator : '-'
 		}
-        
-	}).highlight("<%= search %>".split(' '));
+	};
+    
+    $('#table-modules').tablesorter(opt).highlight("<%= search %>".split(' '));
+    $('#table-students').tablesorter(opt).highlight("<%= search %>".split(' '));
 });
-function stalk(id) {
-    window.location.href = '/student/' + id;
-}
 </script>
 <% include foot %>

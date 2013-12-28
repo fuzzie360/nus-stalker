@@ -10,6 +10,7 @@ function appendChecksum(matric) {
   return matric + table[sum%13];
 }
 %>
+<% include searchWidget %>
 <div class="text-center">
     <h1><%= student.displayName %></h1>
 </div>
@@ -72,6 +73,13 @@ function appendChecksum(matric) {
         </td>
     </tr>
 </table>
+
+<% if (!student.enrolledOn || student.enrolledOn < 13) { %>
+<div class="alert alert-warning alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    History older than 2013 Sem 1 is not available
+</div>
+<% } %>
 
 <% if (student.modules.length > 0) { %>
     <h3>Module History</h3>
@@ -369,9 +377,6 @@ function appendChecksum(matric) {
             });
         }
     });
-    function module(id) {
-        window.location.href = '/module/' + id;
-    }
     </script>
 <% } %>
 

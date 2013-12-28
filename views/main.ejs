@@ -15,7 +15,7 @@
             <div class="input-group col-sm-8 col-sm-offset-2">
                 <input type="text" class="typeahead form-control" name="q">
                 <span class="input-group-btn">
-                    <input type="submit" class="btn btn-default" value="Search">
+                    <button type="submit" class="btn btn-default"><i class="glyphicon glyphicon-search"></i></a>
                 </span>
             </div>
         </div>
@@ -24,60 +24,12 @@
         <p class="text-muted"><%= random %></p>
     </div>
 </div>
+<script src="/js/searchWidget.js"></script>
 <script>
 $(function(){
-    var students = new Dataset({
-        remote: '/student/suggest?q=%QUERY'
-    }).initialize();
-    
-    var modules = new Dataset({
-        remote: '/module/suggest?q=%QUERY'
-    }).initialize();
-    
-    var easterEggs = new Dataset({
-        local: 'Robert\'); DROP TABLE Students;--'
-    }).initialize();
-    
-    $('.typeahead').typeahead({
-        sections: [{
-            highlight: true,
-            name: 'modulesSection',
-            source: modules,
-            limit: 10,
-            templates: {
-                footer: '<div class="tt-header">Modules</div>'
-            }
-        }, {
-            highlight: true,
-            name: 'studentsSection',
-            source: students,
-            limit: 10,
-            templates: {
-                footer: '<div class="tt-header">Students</div>'
-            }
-        }, {
-            highlight: true,
-            name: 'easterEggSection',
-            source: easterEggs,
-            limit: 10
-        }]                                                               
-    })
-    .on('typeahead:opened',function() {
-        $('.tt-dropdown-menu').css('width',$('.typeahead').outerWidth() + 'px');
-    })
-    .on('typeahead:selected', function(obj, datum, section) {
-        switch (section) {
-        case 'studentsSection':
-            window.location.href = '/student/' + datum.id;
-            break;
-        case 'modulesSection':
-            window.location.href = '/module/' + datum.id;
-            break;
-        case 'easterEggSection':
-            window.location.href = 'bobby.txt'
-            break;
-        }
-    });
+    var search = $('.typeahead')
+    search.focus();
+    search.select();
 });
 </script>
 <% include foot %>

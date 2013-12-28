@@ -123,16 +123,34 @@ app.get('/search', function(req, res) {
     + ' LEFT OUTER JOIN Faculties AS faculties ON faculties.id = StudentFaculties.FacultyId'
     + ' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3'
     + ' ORDER BY relevance DESC LIMIT 100', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
-    .success(function(results) {
-        if (results.length == 1) {
-            res.redirect('/student/' + results[0].matric );
-            return;
-        }
+    .success(function(students) {
         
-        res.render('search.ejs', {
-            search: req.query.q,
-            results: results,
-            truncated: results.length == 100
+        sequelize.query('SELECT Modules.*, ModuleDepartments.name AS `department.name`,'
+        +' MATCH (Modules.name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules'
+        +' LEFT OUTER JOIN ModuleDepartments ON ModuleDepartments.id = Modules.ModuleDepartmentId'
+        +' WHERE MATCH (Modules.name) AGAINST (? IN BOOLEAN MODE) OR code LIKE ?'
+        +' OR CONCAT_WS(" ", Modules.code, Modules.name) LIKE ?'
+        +' ORDER BY relevance DESC LIMIT 100', null, { raw:true },
+        [
+            req.query.q,
+            prependPlusToQuery(req.query.q),
+            req.query.q,
+            '%'+req.query.q+'%'
+        ]).success(function(modules) {
+            if (students.length == 1 && modules.length == 0) {
+                res.redirect('/student/' + students[0].matric );
+                return;
+            } else if (modules.length == 1 && students.length == 0) {
+                res.redirect('/module/' + modules[0].code );
+                return;
+            }
+            
+            res.render('search.ejs', {
+                search: req.query.q,
+                students: students,
+                modules: modules,
+                truncated: students.length == 100 || modules.length == 100
+            });
         });
     });
 });

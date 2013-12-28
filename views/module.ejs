@@ -10,6 +10,7 @@ function appendChecksum(matric) {
   return matric + table[sum%13];
 }
 %>
+<% include searchWidget %>
 <div class="text-center">
     <h1><%= module.code %> <%= module.name %></h1>
 </div>
@@ -51,7 +52,7 @@ function appendChecksum(matric) {
     <tbody>
         <% for (var i=0; i<module.students.length; i++) { %>
             <% var s = module.students[i] %>
-            <tr onclick="stalk('<%= s.matric %>');" class="table-hand">
+            <tr onclick="student('<%= s.matric %>');" class="table-hand">
                 <td><%= 2000 + s.StudentModule.year %> <span style="display:none"> Semester <%= s.StudentModule.semester %></span></td>
                 <td><%= s.StudentModule.semester %></td>
                 <td style="text-transform:uppercase"><%= appendChecksum(s.matric) %></td>
@@ -352,8 +353,5 @@ $(function() {
         })
     }
 });
-function stalk(id) {
-    window.location.href = '/student/' + id;
-}
 </script>
 <% include foot %>
