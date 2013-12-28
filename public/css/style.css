@@ -174,3 +174,15 @@ tr:last-of-type td:last-child {
 .header-search {
     padding: 20px;
 }
+.main-search {
+    margin-top: 45px;
+    margin-bottom: 65px;
+}
+.main-container {
+    margin-top:50px;
+}
+@media (min-width: 768px) {
+    .main-container {
+        margin-top:150px;
+    }
+}
