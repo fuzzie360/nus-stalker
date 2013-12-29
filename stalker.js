@@ -122,9 +122,7 @@ app.get('/search', function(req, res) {
         include: [Faculty],
         limit: 200,
     })*/
-    sequelize.query('SELECT Students.*, faculties.name AS `faculties.name`,'
-    + ' faculties.id AS `faculties.id`, faculties.createdAt AS `faculties.createdAt`,'
-    + ' faculties.updatedAt AS `faculties.updatedAt`,'
+    sequelize.query('SELECT Students.*, faculties.name AS `faculties.name`, faculties.id AS `faculties.id`, '
     + ' MATCH (displayName, firstName, lastName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
     + ' LEFT OUTER JOIN StudentFaculties ON Students.id = StudentFaculties.StudentId'
     + ' LEFT OUTER JOIN Faculties AS faculties ON faculties.id = StudentFaculties.FacultyId'
@@ -223,7 +221,34 @@ app.get('/student/:matric', function(req, res) {
             function iter(mods) {
                 if (_.isEmpty(mods)) {
                     student.modules = modules;
-                    res.render('student.ejs', { student:student });
+                    
+                    sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,'
+                    +' CASE WHEN not_in.cnt is null'
+                    +' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)'
+                    +' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))'
+                    +' END AS jaccardIndex'
+                    +' FROM Students s'
+                    +' INNER JOIN (SELECT StudentId, COUNT(*) AS cnt FROM StudentModules WHERE ModuleId IN (SELECT ModuleId FROM StudentModules WHERE StudentId = ?)'
+                    +' AND StudentId != ? GROUP BY StudentId) AS intersection'
+                    +' ON s.id = intersection.StudentId'
+                    +' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN'
+                    +' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in'
+                    +' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 5', 
+                    null, { raw: true },
+                    [
+                        student.id,
+                        student.id,
+                        student.id,
+                        student.id,
+                        student.id,
+                        student.id
+                    ]).success(function(similarModules) {
+                        res.render('student.ejs', {
+                            student: student,
+                            similarModules: similarModules
+                        });
+                    });
+                    
                     return;
                 }
                 

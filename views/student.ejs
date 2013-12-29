@@ -18,7 +18,7 @@ function appendChecksum(matric) {
 <table class="table">
     <tr class="displayPictureRow">
         <th>Display Picture</th>
-        <td><img class="displayPicture"></td>
+        <td><img class="displayPicture thumbnail"></td>
     </tr>
     <tr>
         <th>Matric</th>
@@ -124,6 +124,29 @@ function appendChecksum(matric) {
         <div id="module-by-level-chart" style="height:300px"></div>
     </div>
     
+    <h3>Students who took similar modules</h3>
+    <table id="table-similar-modules" class="table table-hover">
+        <thead>
+            <tr>
+                <th class="group-letter-4">Matric</th>
+                <th>Name</th>
+                <th>Modules in Common</th>
+                <th>Similarity</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% for (var i=0; i<similarModules.length; i++) { %>
+                <% var s = similarModules[i] %>
+                <tr onclick="student('<%= s.matric %>');" class="table-hand">
+                    <td style="text-transform:uppercase"><%= appendChecksum(s.matric) %></td>
+                    <td><%= s.displayName %></td>
+                    <td><%= s.common %></td>
+                    <td><%= Math.round(s.jaccardIndex * 100) %>%</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+    
     <script>
     $(function() {
         $.extend($.tablesorter.themes.bootstrap, {
@@ -155,6 +178,18 @@ function appendChecksum(matric) {
                 filter_reset : '.reset',
     		},
             sortList: [[0,1],[1,1],[2,0]]
+    	});
+        
+        $('#table-similar-modules').tablesorter({
+    		theme: 'bootstrap',
+            widthFixed: true,
+            headerTemplate : '{content} {icon}',
+    		widgets : [ 'uitheme', 'stickyHeaders', 'filter', 'zebra' ],
+    		widgetOptions: {
+                zebra : ['even', 'odd'],
+                filter_reset : '.reset',
+    		},
+            sortList: [[3,1], [2,1]]
     	});
         
         function labelFormatter(label, series) {
