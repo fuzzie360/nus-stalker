@@ -415,24 +415,26 @@ function appendChecksum(matric) {
                 }
             });
         }
-        $('.displayPictureRow').hide();
-        var email = '<%= student.forwardTo ? student.forwardTo : student.email %>';
-        var plusIndex = email.indexOf('+');
-        if (plusIndex != -1) {
-            atDomain = email.substring(email.indexOf('@'));
-            email = email.substring(0, plusIndex) + atDomain;
-        }
-        $.gravatar(email, {
-            size: 256,
-            rating: 'x',
-            image: '404'
-        }, function(url) {
-            $('.displayPicture').attr('src', url);
-            $('.displayPictureRow').show();
-        })
     });
     </script>
 <% } %>
+<script>
+$('.displayPictureRow').hide();
+var email = '<%= student.forwardTo ? student.forwardTo : student.email %>';
+var plusIndex = email.indexOf('+');
+if (plusIndex != -1) {
+    atDomain = email.substring(email.indexOf('@'));
+    email = email.substring(0, plusIndex) + atDomain;
+}
+$.gravatar(email, {
+    size: 256,
+    rating: 'x',
+    image: '404'
+}, function(url) {
+    $('.displayPicture').attr('src', url);
+    $('.displayPictureRow').show();
+});
+</script>
 
 <div class="pull-right">
     <button onclick="history.back()"  class="btn btn-default">Back</button>
