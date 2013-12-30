@@ -77,6 +77,11 @@ function appendChecksum(matric) {
     </div>
 </form>
 
+<h3>Students who took <%= module.code %> also took</h3>
+<div class="thumbnail chart">
+    <div id="also-took-chart" style="height:300px"></div>
+</div>
+
 <div class="pull-right">
     <button onclick="history.back()"  class="btn btn-default">Back</button>
     <a href="/" class="btn btn-primary">New Search</a>
@@ -350,8 +355,43 @@ $(function() {
                 hoverable: true,
                 clickable: true
             }
-        })
+        });
     }
+    
+    var alsoTook = [
+    <% for (var i=0; i<alsoTook.length; i++){ %>
+        <% var m = alsoTook[i] %>
+        ["<%= m.code %><br><%= m.name %>", <%= m.count %>],
+    <% } %>
+    ];
+    
+    $.plot('#also-took-chart', [alsoTook], {
+        series: {
+            bars: {
+                show: true,
+				barWidth: 0.6,
+				align: "center"
+            }
+		},
+        xaxis: {
+            mode: "categories",
+			tickLength: 0
+		},
+		yaxis: {
+            axisLabel: "No. of Students"
+        },
+        grid: {
+            hoverable: true,
+            clickable: true
+        }
+    });
+    
+    $("#also-took-chart").bind("plotclick", function (event, pos, item) {
+		if (item) {
+            var code = item.series.data[item.dataIndex][0].split('<br>')[0];
+            module(code);
+		}
+	});
 });
 </script>
 <% include foot %>

@@ -233,7 +233,7 @@ app.get('/student/:matric', function(req, res) {
                     +' ON s.id = intersection.StudentId'
                     +' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN'
                     +' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in'
-                    +' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 5', 
+                    +' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10', 
                     null, { raw: true },
                     [
                         student.id,
@@ -317,8 +317,24 @@ app.get('/module/:code', function(req, res) {
             // shim because sequelize many-to-many eager loading is broken
             function iter(stus) {
                 if (_.isEmpty(stus)) {
-                    module.students = students;
-                    res.render('module.ejs', { module:module });
+                    sequelize.query('SELECT code, name, mc, COUNT(*) count FROM StudentModules f'
+                    +' INNER JOIN StudentModules s ON s.StudentId = f.StudentId'
+                    +' LEFT OUTER JOIN Modules ON s.ModuleId = Modules.id'
+                    +' WHERE f.ModuleId = ? AND s.ModuleId != ?'
+                    +' GROUP BY s.ModuleId'
+                    +' HAVING COUNT(*) > 1'
+                    +' ORDER BY COUNT(*) DESC LIMIT 10', null, { raw:true },
+                    [
+                        module.id,
+                        module.id
+                    ]).success(function(alsoTook) {
+                        module.students = students;
+                        res.render('module.ejs', {
+                            module: module,
+                            alsoTook: alsoTook
+                        });
+                    })
+                    
                     return;
                 }
                 
