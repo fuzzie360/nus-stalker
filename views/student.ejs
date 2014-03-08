@@ -125,6 +125,10 @@ function appendChecksum(matric) {
     </div>
     
     <h3>Students who took similar modules</h3>
+    <div class="thumbnail chart">
+        <div id="similar-modules-chart" style="height:300px"></div>
+    </div>
+    
     <table id="table-similar-modules" class="table table-hover">
         <thead>
             <tr>
@@ -184,7 +188,7 @@ function appendChecksum(matric) {
     		theme: 'bootstrap',
             widthFixed: true,
             headerTemplate : '{content} {icon}',
-    		widgets : [ 'uitheme', 'stickyHeaders', 'filter', 'zebra' ],
+    		widgets : [ 'uitheme', 'stickyHeaders', 'zebra' ],
     		widgetOptions: {
                 zebra : ['even', 'odd'],
                 filter_reset : '.reset',
@@ -415,30 +419,70 @@ function appendChecksum(matric) {
                 }
             });
         }
+        
+        var similarModules = [
+        <% for (var i=0; i<similarModules.length; i++){ %>
+            <% var s = similarModules[i] %>
+            ["<%= s.matric.toUpperCase() %><br><%= s.displayName %>", <%= Math.round(s.jaccardIndex * 100) %>],
+        <% } %>
+        ];
+    
+        $.plot('#similar-modules-chart', [similarModules], {
+            series: {
+                bars: {
+                    show: true,
+    				barWidth: 0.6,
+    				align: "center"
+                }
+    		},
+            xaxis: {
+                mode: "categories",
+    			tickLength: 0
+    		},
+    		yaxis: {
+                axisLabel: "Similarity",
+                tickFormatter: function (v) {
+					return v + " %";
+				}
+            },
+            grid: {
+                hoverable: true,
+                clickable: true
+            }
+        });
+    
+        $("#similar-modules-chart").bind("plotclick", function (event, pos, item) {
+    		if (item) {
+                var code = item.series.data[item.dataIndex][0].split('<br>')[0];
+                student(code);
+    		}
+    	});
     });
     </script>
 <% } %>
 <script>
-$('.displayPictureRow').hide();
-var email = '<%= student.forwardTo ? student.forwardTo : student.email %>';
-var plusIndex = email.indexOf('+');
-if (plusIndex != -1) {
-    atDomain = email.substring(email.indexOf('@'));
-    email = email.substring(0, plusIndex) + atDomain;
-}
-$.gravatar(email, {
-    size: 256,
-    rating: 'x',
-    image: '404'
-}, function(url) {
-    $('.displayPicture').attr('src', url);
-    $('.displayPictureRow').show();
+$(function() {
+    $('.displayPictureRow').hide();
+    var email = '<%= student.forwardTo ? student.forwardTo : student.email %>';
+    var plusIndex = email.indexOf('+');
+    if (plusIndex != -1) {
+        atDomain = email.substring(email.indexOf('@'));
+        email = email.substring(0, plusIndex) + atDomain;
+    }
+    $.gravatar(email, {
+        size: 256,
+        rating: 'x',
+        image: '404'
+    }, function(url) {
+        $('.displayPicture').attr('src', url);
+        $('.displayPictureRow').show();
+    });
 });
 </script>
 
 <div class="pull-right">
     <button onclick="history.back()"  class="btn btn-default">Back</button>
-    <a href="/" class="btn btn-primary">New Search</a>
+    <a href="/" class="btn btn-primary"><i class="glyphicon glyphicon-search"></i> New Search</a>
 </div>
 <div class="clearfix"></div>
 <br>

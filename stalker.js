@@ -223,7 +223,7 @@ app.get('/student/:matric', function(req, res) {
                     student.modules = modules;
                     
                     sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,'
-                    +' CASE WHEN not_in.cnt is null'
+                    +' CASE WHEN not_in.cnt IS NULL'
                     +' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)'
                     +' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))'
                     +' END AS jaccardIndex'
