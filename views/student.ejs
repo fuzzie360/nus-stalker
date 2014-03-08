@@ -1,20 +1,34 @@
 <% include head %>
-<% 
-function appendChecksum(matric) {
-  var sum = 0;
-  for (var i=1; i<8; i++) {
-      sum += parseInt(matric[i]);
+<%
+// courtesy of Beng Hee Eu
+function appendChecksum(id) {
+  var matches = id.toUpperCase().match(/^A\d{7}|U\d{6,7}/);
+  if (matches) {
+    var match = matches[0];
+
+    // Discard 3rd digit from U-prefixed NUSNET ID
+    if (match[0] === 'U' && match.length === 8) {
+      match = match.slice(0, 3) + match.slice(4);
+    }
+
+    var weights = {
+      U: [0, 1, 3, 1, 2, 7],
+      A: [1, 1, 1, 1, 1, 1]
+    }[match[0]];
+
+    for (var i = 0, sum = 0, digits = match.slice(-6); i < 6; i++) {
+      sum += weights[i] * digits[i];
+    }
+
+    return match + 'YXWURNMLJHEAB'[sum % 13];
   }
-  var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
-  if (typeof table[sum%13] == "undefined") return matric;
-  return matric + table[sum%13];
 }
 %>
 <% include searchWidget %>
 <div class="text-center">
     <h1><%= student.displayName %></h1>
 </div>
-    
+
 <table class="table">
     <tr class="displayPictureRow">
         <th>Display Picture</th>
@@ -64,7 +78,7 @@ function appendChecksum(matric) {
             </ul>
         </td>
     </tr>
-    <% 
+    <%
         var now = new Date();
         var hasAyStarted = !(now.getMonth() < 8);
         var refYear = now.getFullYear() - 2000;
@@ -118,17 +132,17 @@ function appendChecksum(matric) {
     <div class="thumbnail chart">
         <div id="module-by-dept-chart" style="height:300px"></div>
     </div>
-    
+
     <h3>Modules By Level</h3>
     <div class="thumbnail chart">
         <div id="module-by-level-chart" style="height:300px"></div>
     </div>
-    
+
     <h3>Students who took similar modules</h3>
     <div class="thumbnail chart">
         <div id="similar-modules-chart" style="height:300px"></div>
     </div>
-    
+
     <table id="table-similar-modules" class="table table-hover">
         <thead>
             <tr>
@@ -150,7 +164,7 @@ function appendChecksum(matric) {
             <% } %>
         </tbody>
     </table>
-    
+
     <script>
     $(function() {
         $.extend($.tablesorter.themes.bootstrap, {
@@ -171,7 +185,7 @@ function appendChecksum(matric) {
             even       : '', // odd row zebra striping
             odd        : ''  // even row zebra striping
         });
-      
+
         $('#table-modules').tablesorter({
     		theme: 'bootstrap',
             widthFixed: true,
@@ -183,7 +197,7 @@ function appendChecksum(matric) {
     		},
             sortList: [[0,1],[1,1],[2,0]]
     	});
-        
+
         $('#table-similar-modules').tablesorter({
     		theme: 'bootstrap',
             widthFixed: true,
@@ -195,11 +209,11 @@ function appendChecksum(matric) {
     		},
             sortList: [[3,1], [2,1]]
     	});
-        
+
         function labelFormatter(label, series) {
     		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color:white;'>" + Math.round(series.percent) + "%</div>";
     	}
-    
+
         var modules = [
         <% for (var i=0; i<student.modules.length; i++){ %>
             <% var m = student.modules[i] %>
@@ -209,9 +223,9 @@ function appendChecksum(matric) {
                 code: "<%= m.code %>",
                 department: "<%= m.moduleDepartment ? m.moduleDepartment.name : "null" %>"
             },
-        <% } %> 
+        <% } %>
         ];
-    
+
         for (var i=0; i<modules.length; i++) {
             var module = modules[i];
             var levelCodeRegex = /[0-9][0-9][0-9][0-9]/g;
@@ -223,29 +237,29 @@ function appendChecksum(matric) {
                 module.department = "No Department";
             }
         };
-    
+
         var modulesByDept = _.groupBy(modules, function(m) { return m.department });
         var sems = [];
         for (var dept in modulesByDept) {
             modulesByDept[dept] = _.groupBy(modulesByDept[dept], function(m) {
                 return m.semester
             })
-        
+
             sems = _.union(sems, _.keys(modulesByDept[dept]));
         }
-    
+
         for (var dept in modulesByDept) {
             sems.forEach(function(sem) {
                 modulesByDept[dept][sem] = _.reduce(modulesByDept[dept][sem], function(memo,m) {
                     return m.mc + memo;
                 }, 0)
             });
-        
+
             modulesByDept[dept] = _.pairs(modulesByDept[dept]);
         }
-    
+
         var dataByDept = [];
-    
+
         if (sems.length > 1) {
             for (var dept in modulesByDept) {
                 dataByDept.push({
@@ -253,11 +267,11 @@ function appendChecksum(matric) {
                     label: dept
                 })
             }
-            
+
             dataByDept = _.sortBy(dataByDept, function(y) {
                 return y.label;
             });
-    
+
         	$.plot('#module-by-dept-chart', dataByDept, {
                 series: {
                     stack: true,
@@ -295,11 +309,11 @@ function appendChecksum(matric) {
                     label: dept
                 })
             }
-            
+
             dataByDept = _.sortBy(dataByDept, function(y) {
                 return y.label;
             });
-    
+
         	$.plot('#module-by-dept-chart', dataByDept, {
                 series: {
                     pie: {
@@ -321,29 +335,29 @@ function appendChecksum(matric) {
                 }
             });
         }
-    
+
         var modulesByLevel = _.groupBy(modules, function(m) { return m.level });
         var levels = [];
         for (var level in modulesByLevel) {
             modulesByLevel[level] = _.groupBy(modulesByLevel[level], function(m) {
                 return m.semester
             })
-        
+
             levels = _.union(levels, _.keys(modulesByLevel[level]));
         }
-    
+
         for (var level in modulesByLevel) {
             levels.forEach(function(sem) {
                 modulesByLevel[level][sem] = _.reduce(modulesByLevel[level][sem], function(memo,m) {
                     return m.mc + memo;
                 }, 0)
             });
-        
+
             modulesByLevel[level] = _.pairs(modulesByLevel[level]);
         }
-    
+
         var dataByLevel = [];
-    
+
         if (sems.length > 1) {
             for (var level in modulesByLevel) {
                 dataByLevel.push({
@@ -351,11 +365,11 @@ function appendChecksum(matric) {
                     label: "Level " + level
                 })
             }
-            
+
             dataByLevel = _.sortBy(dataByLevel, function(y) {
                 return y.label;
             });
-    
+
         	$.plot("#module-by-level-chart", dataByLevel, {
                 series: {
                     stack: true,
@@ -393,11 +407,11 @@ function appendChecksum(matric) {
                     label: level
                 })
             }
-            
+
             dataByLevel = _.sortBy(dataByLevel, function(y) {
                 return y.label;
             });
-        
+
         	$.plot('#module-by-level-chart', dataByLevel, {
                 series: {
                     pie: {
@@ -419,14 +433,14 @@ function appendChecksum(matric) {
                 }
             });
         }
-        
+
         var similarModules = [
         <% for (var i=0; i<similarModules.length; i++){ %>
             <% var s = similarModules[i] %>
             ["<%= s.matric.toUpperCase() %><br><%= s.displayName %>", <%= Math.round(s.jaccardIndex * 100) %>],
         <% } %>
         ];
-    
+
         $.plot('#similar-modules-chart', [similarModules], {
             series: {
                 bars: {
@@ -450,7 +464,7 @@ function appendChecksum(matric) {
                 clickable: true
             }
         });
-    
+
         $("#similar-modules-chart").bind("plotclick", function (event, pos, item) {
     		if (item) {
                 var code = item.series.data[item.dataIndex][0].split('<br>')[0];

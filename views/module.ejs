@@ -1,13 +1,26 @@
 <% include head %>
-<% 
-function appendChecksum(matric) {
-  var sum = 0;
-  for (var i=1; i<8; i++) {
-      sum += parseInt(matric[i]);
+<%
+function appendChecksum(id) {
+  var matches = id.toUpperCase().match(/^A\d{7}|U\d{6,7}/);
+  if (matches) {
+    var match = matches[0];
+
+    // Discard 3rd digit from U-prefixed NUSNET ID
+    if (match[0] === 'U' && match.length === 8) {
+      match = match.slice(0, 3) + match.slice(4);
+    }
+
+    var weights = {
+      U: [0, 1, 3, 1, 2, 7],
+      A: [1, 1, 1, 1, 1, 1]
+    }[match[0]];
+
+    for (var i = 0, sum = 0, digits = match.slice(-6); i < 6; i++) {
+      sum += weights[i] * digits[i];
+    }
+
+    return match + 'YXWURNMLJHEAB'[sum % 13];
   }
-  var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
-  if (typeof table[sum%13] == "undefined") return matric;
-  return matric + table[sum%13];
 }
 %>
 <% include searchWidget %>
@@ -69,7 +82,7 @@ function appendChecksum(matric) {
             <li class="prev"><a href="#">&laquo;</a></li>
         </ul>
         <ul class="pagination pages">
-        
+
         </ul>
         <ul class="pagination">
             <li class="next"><a href="#">&raquo;</a></li>
@@ -108,7 +121,7 @@ $(function() {
         even       : '', // odd row zebra striping
         odd        : ''  // even row zebra striping
     });
-      
+
     $('#table-students').tablesorter({
 		theme: 'bootstrap',
         widthFixed: true,
@@ -144,49 +157,49 @@ $(function() {
         size: 10,
         output: 'showing: {startRow} to {endRow} ({totalRows})'
     });
-    
+
     $('.pagination').on('click', 'a', function() {
         $(this).addClass('active').siblings().removeClass('active');
         $('#table-students').trigger('pageSet', $(this).html());
         return false;
     });
-    
-    <% 
+
+    <%
         var now = new Date();
         var hasAyStarted = !(now.getMonth() < 8);
         var refYear = now.getFullYear() - 2000;
         refYear = hasAyStarted ? refYear : refYear-1;
     %>
-    
+
     var students = [
     <% for (var i=0; i<module.students.length; i++){ %>
         <% var s = module.students[i] %>
         {
             name: "<%= s.displayName %>",
             semester: "<%= 2000 + s.StudentModule.year %> Sem <%= s.StudentModule.semester %>",
-            faculty: "<%= s.faculties[0] ? s.faculties[0].name : 'No Faculty' %>",      
+            faculty: "<%= s.faculties[0] ? s.faculties[0].name : 'No Faculty' %>",
             year: "<%= s.enrolledOn ? 'Year ' + (refYear - s.enrolledOn + 1) : 'Unknown' %>"
         },
-    <% } %> 
+    <% } %>
     ];
-    
+
     var studentsByFaculty = _.groupBy(students, function(s) { return s.faculty });
     var sems = [];
     for (var fac in studentsByFaculty) {
         studentsByFaculty[fac] = _.countBy(studentsByFaculty[fac], function(m) {
             return m.semester
         })
-    
+
         sems = _.union(sems, _.keys(studentsByFaculty[fac]));
     }
 
     // remove manually inserted values
     sems = _.without(sems, '2012 Sem 1', '2012 Sem 2');
-    
+
     for (var fac in studentsByFaculty) {
         delete studentsByFaculty[fac]['2012 Sem 1'];
         delete studentsByFaculty[fac]['2012 Sem 2'];
-        
+
         sems.forEach(function(sem) {
             studentsByFaculty[fac][sem] =studentsByFaculty[fac][sem] ? studentsByFaculty[fac][sem] : 0;
         });
@@ -202,7 +215,7 @@ $(function() {
                 label: fac
             })
         }
-        
+
         dataByFaculty = _.sortBy(dataByFaculty, function(y) {
             return y.label;
         });
@@ -232,15 +245,15 @@ $(function() {
                 label: fac
             })
         }
-        
+
         function labelFormatter(label, series) {
     		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color:white;'>" + Math.round(series.percent) + "%</div>";
     	}
-        
+
         dataByFaculty = _.sortBy(dataByFaculty, function(y) {
             return y.label;
         });
-        
+
     	$.plot('#students-by-faculty-chart', dataByFaculty, {
             series: {
                 pie: {
@@ -263,24 +276,24 @@ $(function() {
             }
         })
     }
-    
+
     var studentsByYear = _.groupBy(students, function(s) { return s.year });
     sems = [];
     for (var year in studentsByYear) {
         studentsByYear[year] = _.countBy(studentsByYear[year], function(m) {
             return m.semester
         })
-    
+
         sems = _.union(sems, _.keys(studentsByYear[year]));
     }
-    
+
     // remove manually inserted values
     sems = _.without(sems, '2012 Sem 1', '2012 Sem 2');
-    
+
     for (var year in studentsByYear) {
         delete studentsByYear[year]['2012 Sem 1'];
         delete studentsByYear[year]['2012 Sem 2'];
-        
+
         sems.forEach(function(sem) {
             studentsByYear[year][sem] =studentsByYear[year][sem] ? studentsByYear[year][sem] : 0;
         });
@@ -288,7 +301,7 @@ $(function() {
     }
 
     var dataByYear = [];
-    
+
     if (sems.length > 1) {
         for (var year in studentsByYear) {
             dataByYear.push({
@@ -296,7 +309,7 @@ $(function() {
                 label: year
             })
         }
-        
+
         dataByYear = _.sortBy(dataByYear, function(y) {
             return y.label;
         });
@@ -326,15 +339,15 @@ $(function() {
                 label: year
             })
         }
-        
+
         dataByYear = _.sortBy(dataByYear, function(y) {
             return y.label;
         });
-        
+
         function labelFormatter(label, series) {
     		return "<div style='font-size:12pt; font-weight: bold; text-align:center; padding:2px; color: white'>" + Math.round(series.percent) + "%</div>";
     	}
-        
+
     	$.plot('#students-by-year-chart', dataByYear, {
             series: {
                 pie: {
@@ -357,14 +370,14 @@ $(function() {
             }
         });
     }
-    
+
     var alsoTook = [
     <% for (var i=0; i<alsoTook.length; i++){ %>
         <% var m = alsoTook[i] %>
         ["<%= m.code %><br><%= m.name %>", <%= m.count %>],
     <% } %>
     ];
-    
+
     $.plot('#also-took-chart', [alsoTook], {
         series: {
             bars: {
@@ -385,7 +398,7 @@ $(function() {
             clickable: true
         }
     });
-    
+
     $("#also-took-chart").bind("plotclick", function (event, pos, item) {
 		if (item) {
             var code = item.series.data[item.dataIndex][0].split('<br>')[0];
