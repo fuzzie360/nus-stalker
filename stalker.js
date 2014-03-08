@@ -47,7 +47,7 @@ passport.use(new OpenIDStrategy({
 var app = express();
 var server = http.createServer(app);
 app.engine('html', ejs.renderFile);
-app.use(express.static('public'));
+app.use(express.static(__dirname + '/public'));
 app.use(express.cookieParser());
 app.use(express.bodyParser());
 app.use(express.session({
