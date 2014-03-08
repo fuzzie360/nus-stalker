@@ -1,6 +1,6 @@
 var config = require('./config');
 var util = require('util');
-var http = require('http')
+var http = require('http');
 
 var _ = require('underscore');
 var express = require('express');
@@ -51,7 +51,7 @@ app.use(express.static(__dirname + '/public'));
 app.use(express.cookieParser());
 app.use(express.bodyParser());
 app.use(express.session({
-    store: new MySQLSessionStore(config.db.database, 
+    store: new MySQLSessionStore(config.db.database,
         config.db.user,
         config.db.pass,
         config.session.opt),
@@ -71,7 +71,7 @@ app.get('/', function(req, res) {
         res.redirect('/login');
         return;
     }
-    
+
     var randoms = [
         'ALL YOUR DATABASE ARE BELONG TO US',
         'Nothing is beyond our reach',
@@ -85,7 +85,7 @@ app.get('/', function(req, res) {
         'Has anyone really been far even as decided to use even go want to do look more like?',
         'What does the fox say?',
         'What\'s the meaning of Stongehenge?',
-        'Drive a Civic. It\s a car you can trust'
+        'Drive a Civic. It\'s a car you can trust'
     ];
     res.render('main.ejs', {
         messages: req.flash('error'),
@@ -95,7 +95,7 @@ app.get('/', function(req, res) {
 
 function prependPlusToQuery(q) {
     return _.map(q.match(/\w+|"[^"]+"/g), function(x) {
-        if (x.length > 0 && x[0] == '-') return; 
+        if (x.length > 0 && x[0] == '-') return;
         return '+'+x;
     }).join(' ');
 }
@@ -105,18 +105,18 @@ app.get('/search', function(req, res) {
         res.redirect('/login');
         return;
     }
-    
+
     if (!req.query.q || req.query.q.length < 4) {
         req.flash('error', 'Query is too short (must be at least 4 characters long)');
         res.redirect('/');
         return;
     }
-    
+
     if (req.query.q.toUpperCase().indexOf('DROP TABLE') != -1) {
         res.redirect('/bobby.txt');
         return;
     }
-    
+
     /*Student.findAll({
         where: ['MATCH (displayName) AGAINST (? IN BOOLEAN MODE)', req.query.q],
         include: [Faculty],
@@ -129,7 +129,7 @@ app.get('/search', function(req, res) {
     + ' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3'
     + ' ORDER BY relevance DESC LIMIT 100', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
     .success(function(students) {
-        
+
         sequelize.query('SELECT Modules.*, ModuleDepartments.name AS `department.name`,'
         +' MATCH (Modules.name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules'
         +' LEFT OUTER JOIN ModuleDepartments ON ModuleDepartments.id = Modules.ModuleDepartmentId'
@@ -149,7 +149,7 @@ app.get('/search', function(req, res) {
                 res.redirect('/module/' + modules[0].code );
                 return;
             }
-            
+
             res.render('search.ejs', {
                 search: req.query.q,
                 students: students,
@@ -165,7 +165,7 @@ app.get('/student/suggest', function(req, res) {
         res.redirect('/login');
         return;
     }
-    
+
     /*Student.findAll({
         attributes: ['displayName'],
         where: ['displayName like ?', '%' + req.query.q + '%'],
@@ -183,13 +183,13 @@ app.get('/student/suggest', function(req, res) {
             var name = names[i].displayName || '';
             var first = names[i].firstName || '';
             var last = names[i].lastName || '';
-            
+
             name = name.replace(/[^\w\s]/gi,'');
             first = first.replace(/[^\w\s]/gi,'');
-            last = last.replace(/[^\w\s]/gi,'')
-            
+            last = last.replace(/[^\w\s]/gi,'');
+
             var tokens = _.without(_.union(name.split(' '), first.split(' '), last.split(' ')), '');
-            
+
             data.push({
                 value: orig,
                 tokens: tokens,
@@ -215,13 +215,13 @@ app.get('/student/:matric', function(req, res) {
             res.send(404);
             return;
         }
-        
+
         student.getModules().success(function(modules) {
             // shim because sequelize many-to-many eager loading is broken
             function iter(mods) {
                 if (_.isEmpty(mods)) {
                     student.modules = modules;
-                    
+
                     sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,'
                     +' CASE WHEN not_in.cnt IS NULL'
                     +' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)'
@@ -233,7 +233,7 @@ app.get('/student/:matric', function(req, res) {
                     +' ON s.id = intersection.StudentId'
                     +' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN'
                     +' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in'
-                    +' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10', 
+                    +' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10',
                     null, { raw: true },
                     [
                         student.id,
@@ -248,20 +248,20 @@ app.get('/student/:matric', function(req, res) {
                             similarModules: similarModules
                         });
                     });
-                    
+
                     return;
                 }
-                
+
                 var module = _.first(mods);
                 module.getModuleDepartment().success(function(d) {
                     if (!d) return iter(_.rest(mods));
-                    
+
                     module.moduleDepartment = d;
                     iter(_.rest(mods));
                 });
             }
             iter(modules);
-        }); 
+        });
     });
 });
 
@@ -270,7 +270,7 @@ app.get('/module/suggest', function(req, res) {
         res.redirect('/login');
         return;
     }
-    
+
     sequelize.query('SELECT code, name,'
     +' MATCH (name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules'
     +' WHERE MATCH (name) AGAINST (? IN BOOLEAN MODE) OR code LIKE ?'
@@ -286,8 +286,8 @@ app.get('/module/suggest', function(req, res) {
         for (var i=0; i<modules.length; i++) {
             var name = modules[i].name || '';
             var code = modules[i].code;
-            var tokens = _.union(name.split(' '), code)
-            
+            var tokens = _.union(name.split(' '), code);
+
             data.push({
                 value: code + ' ' + name,
                 tokens: tokens,
@@ -303,7 +303,7 @@ app.get('/module/:code', function(req, res) {
         res.redirect('/login');
         return;
     }
-    
+
     Module.find({
         where: { code: req.params.code },
         include: [ModuleDepartment]
@@ -312,7 +312,7 @@ app.get('/module/:code', function(req, res) {
             res.send(404);
             return;
         }
-        
+
         module.getStudents().success(function(students) {
             // shim because sequelize many-to-many eager loading is broken
             function iter(stus) {
@@ -333,22 +333,22 @@ app.get('/module/:code', function(req, res) {
                             module: module,
                             alsoTook: alsoTook
                         });
-                    })
-                    
+                    });
+
                     return;
                 }
-                
+
                 var student = _.first(stus);
                 student.getFaculties().success(function(f) {
                     if (!f) return iter(_.rest(stus));
-                    
+
                     student.faculties = f;
                     iter(_.rest(stus));
                 });
             }
             iter(students);
         });
-    })
+    });
 });
 
 app.get('/login', function(req, res) {
@@ -360,7 +360,7 @@ app.get('/login', function(req, res) {
 });
 
 app.get('/logout', function(req, res) {
-   req.logout(); 
+   req.logout();
    res.redirect('/');
 });
 
@@ -368,16 +368,16 @@ app.post('/auth/openid', passport.authenticate('openid'));
 
 app.get('/auth/openid/return', passport.authenticate('openid'), function(req, res) {
     /*var allowed = [ 'a0096836'];
-    
+
     if (allowed.indexOf(req.user.id) < 0) {
         req.logout();
     }
-    
+
     if (!req.isAuthenticated()) {
         res.redirect('/forbidden');
         return;
     }*/
-    
+
     res.redirect('/');
 });
 
