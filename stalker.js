@@ -176,7 +176,10 @@ app.get('/student/:matric', function(req, res) {
 
     Student.find({
         where: { matric: req.params.matric },
-        include: [Career, Faculty, Course, Module],
+        include: [Career, Faculty, Course, {
+            model: Module,
+            include: [ModuleDepartment]
+        }],
         joinTableAttributes: ['year', 'semester']
     }).success(function(student) {
         if (!student) {
