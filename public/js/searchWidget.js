@@ -10,7 +10,7 @@ var easterEggs = new Dataset({
     local: 'Robert\'); DROP TABLE Students;--'
 }).initialize();
 
-var search = $('.typeahead')
+var search = $('.typeahead');
 search.typeahead({
     sections: [{
         highlight: true,
@@ -33,7 +33,7 @@ search.typeahead({
         name: 'easterEggSection',
         source: easterEggs,
         limit: 10
-    }]                                                               
+    }]
 })
 .on('typeahead:opened',function() {
     $('.tt-dropdown-menu').css('width',search.outerWidth() + 'px');
@@ -47,7 +47,7 @@ search.typeahead({
         window.location.href = '/module/' + datum.id;
         break;
     case 'easterEggSection':
-        window.location.href = 'bobby.txt'
+        window.location.href = '/bobby.txt';
         break;
     }
 });
