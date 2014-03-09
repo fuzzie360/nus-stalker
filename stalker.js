@@ -122,30 +122,30 @@ app.get('/search', function(req, res) {
         include: [Faculty],
         limit: 200,
     })*/
-    sequelize.query('SELECT Students.*, faculties.name AS `faculties.name`, faculties.id AS `faculties.id`, '
-    + ' MATCH (displayName, firstName, lastName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
-    + ' LEFT OUTER JOIN StudentFaculties ON Students.id = StudentFaculties.StudentId'
-    + ' LEFT OUTER JOIN Faculties AS faculties ON faculties.id = StudentFaculties.FacultyId'
-    + ' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3'
-    + ' ORDER BY relevance DESC LIMIT 100', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
+    sequelize.query('SELECT Students.*, faculties.name AS `faculties.name`, faculties.id AS `faculties.id`, ' +
+    ' MATCH (displayName, firstName, lastName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students' +
+    ' LEFT OUTER JOIN StudentFaculties ON Students.id = StudentFaculties.StudentId' +
+    ' LEFT OUTER JOIN Faculties AS faculties ON faculties.id = StudentFaculties.FacultyId' +
+    ' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE) HAVING relevance > 0.3' +
+    ' ORDER BY relevance DESC LIMIT 100', null, { raw: true }, [req.query.q, prependPlusToQuery(req.query.q)])
     .success(function(students) {
 
-        sequelize.query('SELECT Modules.*, ModuleDepartments.name AS `department.name`,'
-        +' MATCH (Modules.name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules'
-        +' LEFT OUTER JOIN ModuleDepartments ON ModuleDepartments.id = Modules.ModuleDepartmentId'
-        +' WHERE MATCH (Modules.name) AGAINST (? IN BOOLEAN MODE) OR code LIKE ?'
-        +' OR CONCAT_WS(" ", Modules.code, Modules.name) LIKE ?'
-        +' ORDER BY relevance DESC LIMIT 100', null, { raw:true },
+        sequelize.query('SELECT Modules.*, ModuleDepartments.name AS `department.name`,' +
+        ' MATCH (Modules.name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules' +
+        ' LEFT OUTER JOIN ModuleDepartments ON ModuleDepartments.id = Modules.ModuleDepartmentId' +
+        ' WHERE MATCH (Modules.name) AGAINST (? IN BOOLEAN MODE) OR code LIKE ?' +
+        ' OR CONCAT_WS(" ", Modules.code, Modules.name) LIKE ?' +
+        ' ORDER BY relevance DESC LIMIT 100', null, { raw:true },
         [
             req.query.q,
             prependPlusToQuery(req.query.q),
             req.query.q,
             '%'+req.query.q+'%'
         ]).success(function(modules) {
-            if (students.length == 1 && modules.length == 0) {
+            if (students.length === 1 && modules.length === 0) {
                 res.redirect('/student/' + students[0].matric );
                 return;
-            } else if (modules.length == 1 && students.length == 0) {
+            } else if (modules.length === 1 && students.length === 0) {
                 res.redirect('/module/' + modules[0].code );
                 return;
             }
@@ -171,10 +171,10 @@ app.get('/student/suggest', function(req, res) {
         where: ['displayName like ?', '%' + req.query.q + '%'],
         limit: 10
     })*/
-    sequelize.query('SELECT matric, displayName, firstName, lastName,'
-    +' MATCH (displayName, firstName, lastName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students'
-    +' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE)'
-    +' ORDER BY relevance DESC LIMIT 10', null, { raw:true }, [req.query.q+'*', prependPlusToQuery(req.query.q)+'*'])
+    sequelize.query('SELECT matric, displayName, firstName, lastName,' +
+    ' MATCH (displayName, firstName, lastName) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Students' +
+    ' WHERE MATCH (displayName, firstName, lastName) AGAINST (? IN BOOLEAN MODE)' +
+    ' ORDER BY relevance DESC LIMIT 10', null, { raw:true }, [req.query.q+'*', prependPlusToQuery(req.query.q)+'*'])
     .success(function(names) {
         var data = [];
         for (var i=0; i<names.length; i++) {
@@ -222,18 +222,18 @@ app.get('/student/:matric', function(req, res) {
                 if (_.isEmpty(mods)) {
                     student.modules = modules;
 
-                    sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,'
-                    +' CASE WHEN not_in.cnt IS NULL'
-                    +' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)'
-                    +' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))'
-                    +' END AS jaccardIndex'
-                    +' FROM Students s'
-                    +' INNER JOIN (SELECT StudentId, COUNT(*) AS cnt FROM StudentModules WHERE ModuleId IN (SELECT ModuleId FROM StudentModules WHERE StudentId = ?)'
-                    +' AND StudentId != ? GROUP BY StudentId) AS intersection'
-                    +' ON s.id = intersection.StudentId'
-                    +' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN'
-                    +' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in'
-                    +' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10',
+                    sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,' +
+                    ' CASE WHEN not_in.cnt IS NULL' +
+                    ' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)' +
+                    ' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))' +
+                    ' END AS jaccardIndex' +
+                    ' FROM Students s' +
+                    ' INNER JOIN (SELECT StudentId, COUNT(*) AS cnt FROM StudentModules WHERE ModuleId IN (SELECT ModuleId FROM StudentModules WHERE StudentId = ?)' +
+                    ' AND StudentId != ? GROUP BY StudentId) AS intersection' +
+                    ' ON s.id = intersection.StudentId' +
+                    ' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN' +
+                    ' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in' +
+                    ' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10',
                     null, { raw: true },
                     [
                         student.id,
@@ -271,11 +271,11 @@ app.get('/module/suggest', function(req, res) {
         return;
     }
 
-    sequelize.query('SELECT code, name,'
-    +' MATCH (name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules'
-    +' WHERE MATCH (name) AGAINST (? IN BOOLEAN MODE) OR code LIKE ?'
-    +' OR CONCAT_WS(" ", code, name) LIKE ?'
-    +' ORDER BY relevance DESC LIMIT 10', null, { raw:true },
+    sequelize.query('SELECT code, name,' +
+    ' MATCH (name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance FROM Modules' +
+    ' WHERE MATCH (name) AGAINST (? IN BOOLEAN MODE) OR code LIKE ?' +
+    ' OR CONCAT_WS(" ", code, name) LIKE ?' +
+    ' ORDER BY relevance DESC LIMIT 10', null, { raw:true },
     [
         req.query.q+'*',
         prependPlusToQuery(req.query.q)+'*',
@@ -317,13 +317,13 @@ app.get('/module/:code', function(req, res) {
             // shim because sequelize many-to-many eager loading is broken
             function iter(stus) {
                 if (_.isEmpty(stus)) {
-                    sequelize.query('SELECT code, name, mc, COUNT(*) count FROM StudentModules f'
-                    +' INNER JOIN StudentModules s ON s.StudentId = f.StudentId'
-                    +' LEFT OUTER JOIN Modules ON s.ModuleId = Modules.id'
-                    +' WHERE f.ModuleId = ? AND s.ModuleId != ?'
-                    +' GROUP BY s.ModuleId'
-                    +' HAVING COUNT(*) > 1'
-                    +' ORDER BY COUNT(*) DESC LIMIT 10', null, { raw:true },
+                    sequelize.query('SELECT code, name, mc, COUNT(*) count FROM StudentModules f' +
+                    ' INNER JOIN StudentModules s ON s.StudentId = f.StudentId' +
+                    ' LEFT OUTER JOIN Modules ON s.ModuleId = Modules.id' +
+                    ' WHERE f.ModuleId = ? AND s.ModuleId != ?' +
+                    ' GROUP BY s.ModuleId' +
+                    ' HAVING COUNT(*) > 1' +
+                    ' ORDER BY COUNT(*) DESC LIMIT 10', null, { raw:true },
                     [
                         module.id,
                         module.id
@@ -384,13 +384,3 @@ app.get('/auth/openid/return', passport.authenticate('openid'), function(req, re
 app.get('/forbidden', function (req, res) {
     res.render('forbidden.ejs');
 });
-
-
-function appendChecksum(matric) {
-    var sum = 0;
-    for (var i=1; i<8; i++) {
-        sum += parseInt(matric[i]);
-    }
-    var table = ['Y', 'X', 'W', 'U', 'R', 'N', 'M', 'L', 'J', 'H', 'E', 'A', 'B'];
-    return matric + table[sum%13];
-}
