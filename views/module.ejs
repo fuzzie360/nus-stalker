@@ -2,26 +2,26 @@
 <%
 // courtesy of Beng Hee Eu
 function appendChecksum(id) {
-  var matches = id.toUpperCase().match(/^A\d{7}|U\d{6,7}/);
-  if (matches) {
-    var match = matches[0];
+    var matches = id.toUpperCase().match(/^A\d{7}|U\d{6,7}/);
+    if (matches) {
+        var match = matches[0];
 
-    // Discard 3rd digit from U-prefixed NUSNET ID
-    if (match[0] === 'U' && match.length === 8) {
-      match = match.slice(0, 3) + match.slice(4);
+        // Discard 3rd digit from U-prefixed NUSNET ID
+        if (match[0] === 'U' && match.length === 8) {
+            match = match.slice(0, 3) + match.slice(4);
+        }
+
+        var weights = {
+            U: [0, 1, 3, 1, 2, 7],
+            A: [1, 1, 1, 1, 1, 1]
+        }[match[0]];
+
+        for (var i = 0, sum = 0, digits = match.slice(-6); i < 6; i++) {
+            sum += weights[i] * digits[i];
+        }
+
+        return match + 'YXWURNMLJHEAB'[sum % 13];
     }
-
-    var weights = {
-      U: [0, 1, 3, 1, 2, 7],
-      A: [1, 1, 1, 1, 1, 1]
-    }[match[0]];
-
-    for (var i = 0, sum = 0, digits = match.slice(-6); i < 6; i++) {
-      sum += weights[i] * digits[i];
-    }
-
-    return match + 'YXWURNMLJHEAB'[sum % 13];
-  }
 }
 %>
 <% include searchWidget %>
@@ -67,8 +67,8 @@ function appendChecksum(id) {
         <% for (var i=0; i<module.students.length; i++) { %>
             <% var s = module.students[i] %>
             <tr onclick="student('<%= s.matric %>');" class="table-hand">
-                <td><%= 2000 + s.StudentModule.year %> <span style="display:none"> Semester <%= s.StudentModule.semester %></span></td>
-                <td><%= s.StudentModule.semester %></td>
+                <td><%= 2000 + s.studentModule.year %> <span style="display:none"> Semester <%= s.studentModule.semester %></span></td>
+                <td><%= s.studentModule.semester %></td>
                 <td style="text-transform:uppercase"><%= appendChecksum(s.matric) %></td>
                 <td><%= s.displayName %></td>
                 <td><%= s.faculties[0] ? s.faculties[0].name : '-' %></td>
@@ -177,7 +177,7 @@ $(function() {
         <% var s = module.students[i] %>
         {
             name: "<%= s.displayName %>",
-            semester: "<%= 2000 + s.StudentModule.year %> Sem <%= s.StudentModule.semester %>",
+            semester: "<%= 2000 + s.studentModule.year %> Sem <%= s.studentModule.semester %>",
             faculty: "<%= s.faculties[0] ? s.faculties[0].name : 'No Faculty' %>",
             year: "<%= s.enrolledOn ? 'Year ' + (refYear - s.enrolledOn + 1) : 'Unknown' %>"
         },

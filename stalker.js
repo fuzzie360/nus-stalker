@@ -208,7 +208,7 @@ app.get('/student/:matric', function(req, res) {
 
     Student.find({
         where: { matric: req.params.matric },
-        include: [Career, Faculty, Course],
+        include: [Career, Faculty, Course, Module],
         joinTableAttributes: ['year', 'semester']
     }).success(function(student) {
         if (!student) {
@@ -216,51 +216,31 @@ app.get('/student/:matric', function(req, res) {
             return;
         }
 
-        student.getModules().success(function(modules) {
-            // shim because sequelize many-to-many eager loading is broken
-            function iter(mods) {
-                if (_.isEmpty(mods)) {
-                    student.modules = modules;
-
-                    sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,' +
-                    ' CASE WHEN not_in.cnt IS NULL' +
-                    ' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)' +
-                    ' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))' +
-                    ' END AS jaccardIndex' +
-                    ' FROM Students s' +
-                    ' INNER JOIN (SELECT StudentId, COUNT(*) AS cnt FROM StudentModules WHERE ModuleId IN (SELECT ModuleId FROM StudentModules WHERE StudentId = ?)' +
-                    ' AND StudentId != ? GROUP BY StudentId) AS intersection' +
-                    ' ON s.id = intersection.StudentId' +
-                    ' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN' +
-                    ' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in' +
-                    ' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10',
-                    null, { raw: true },
-                    [
-                        student.id,
-                        student.id,
-                        student.id,
-                        student.id,
-                        student.id,
-                        student.id
-                    ]).success(function(similarModules) {
-                        res.render('student.ejs', {
-                            student: student,
-                            similarModules: similarModules
-                        });
-                    });
-
-                    return;
-                }
-
-                var module = _.first(mods);
-                module.getModuleDepartment().success(function(d) {
-                    if (!d) return iter(_.rest(mods));
-
-                    module.moduleDepartment = d;
-                    iter(_.rest(mods));
-                });
-            }
-            iter(modules);
+        sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,' +
+        ' CASE WHEN not_in.cnt IS NULL' +
+        ' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)' +
+        ' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))' +
+        ' END AS jaccardIndex' +
+        ' FROM Students s' +
+        ' INNER JOIN (SELECT StudentId, COUNT(*) AS cnt FROM StudentModules WHERE ModuleId IN (SELECT ModuleId FROM StudentModules WHERE StudentId = ?)' +
+        ' AND StudentId != ? GROUP BY StudentId) AS intersection' +
+        ' ON s.id = intersection.StudentId' +
+        ' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN' +
+        ' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in' +
+        ' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10',
+        null, { raw: true },
+        [
+            student.id,
+            student.id,
+            student.id,
+            student.id,
+            student.id,
+            student.id
+        ]).success(function(similarModules) {
+            res.render('student.ejs', {
+                student: student,
+                similarModules: similarModules
+            });
         });
     });
 });
@@ -306,47 +286,31 @@ app.get('/module/:code', function(req, res) {
 
     Module.find({
         where: { code: req.params.code },
-        include: [ModuleDepartment]
+        include: [ModuleDepartment, {
+            model: Student,
+            include: [Faculty]
+        }]
     }).success(function(module) {
         if (!module) {
             res.send(404);
             return;
         }
 
-        module.getStudents().success(function(students) {
-            // shim because sequelize many-to-many eager loading is broken
-            function iter(stus) {
-                if (_.isEmpty(stus)) {
-                    sequelize.query('SELECT code, name, mc, COUNT(*) count FROM StudentModules f' +
-                    ' INNER JOIN StudentModules s ON s.StudentId = f.StudentId' +
-                    ' LEFT OUTER JOIN Modules ON s.ModuleId = Modules.id' +
-                    ' WHERE f.ModuleId = ? AND s.ModuleId != ?' +
-                    ' GROUP BY s.ModuleId' +
-                    ' HAVING COUNT(*) > 1' +
-                    ' ORDER BY COUNT(*) DESC LIMIT 10', null, { raw:true },
-                    [
-                        module.id,
-                        module.id
-                    ]).success(function(alsoTook) {
-                        module.students = students;
-                        res.render('module.ejs', {
-                            module: module,
-                            alsoTook: alsoTook
-                        });
-                    });
-
-                    return;
-                }
-
-                var student = _.first(stus);
-                student.getFaculties().success(function(f) {
-                    if (!f) return iter(_.rest(stus));
-
-                    student.faculties = f;
-                    iter(_.rest(stus));
-                });
-            }
-            iter(students);
+        sequelize.query('SELECT code, name, mc, COUNT(*) count FROM StudentModules f' +
+        ' INNER JOIN StudentModules s ON s.StudentId = f.StudentId' +
+        ' LEFT OUTER JOIN Modules ON s.ModuleId = Modules.id' +
+        ' WHERE f.ModuleId = ? AND s.ModuleId != ?' +
+        ' GROUP BY s.ModuleId' +
+        ' HAVING COUNT(*) > 1' +
+        ' ORDER BY COUNT(*) DESC LIMIT 10', null, { raw:true },
+        [
+            module.id,
+            module.id
+        ]).success(function(alsoTook) {
+            res.render('module.ejs', {
+                module: module,
+                alsoTook: alsoTook
+            });
         });
     });
 });
