@@ -21,7 +21,9 @@ function appendChecksum(id) {
         }
 
         return match + 'YXWURNMLJHEAB'[sum % 13];
-    }
+    } else {
+		return id;
+	}
 }
 %>
 <% include searchWidget %>
