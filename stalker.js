@@ -106,7 +106,15 @@ app.get('/search', function(req, res) {
         return;
     }
 
-    if (!req.query.q || req.query.q.length < 4) {
+    if (!req.query.q) {
+        req.flash('error', 'You must give a search term to query');
+        res.redirect('/');
+        return;
+    }
+
+    req.query.q = req.query.q.replace(/^\s+|\s+$/g, '');
+
+    if (req.query.q.length < 4) {
         req.flash('error', 'Query is too short (must be at least 4 characters long)');
         res.redirect('/');
         return;
