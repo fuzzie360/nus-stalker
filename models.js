@@ -41,12 +41,11 @@ module.exports = function(sequelize, DataTypes) {
                     query+'*',
                     prependPlusToQuery(query)+'*'
                 ]);
-            }
-        },
-        instanceMethods: {
-            similarStudents: function() {
-                var id = this.id;
-                return sequelize.query('SELECT s.matric, s.displayName, intersection.cnt AS common,' +
+            },
+
+            similarStudents: function(id, _limit) {
+                var limit = _limit || 10;
+                return sequelize.query('SELECT s.id, s.matric, s.displayName, intersection.cnt AS common,' +
                 ' CASE WHEN not_in.cnt IS NULL' +
                 ' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)' +
                 ' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))' +
@@ -57,7 +56,7 @@ module.exports = function(sequelize, DataTypes) {
                 ' ON s.id = intersection.StudentId' +
                 ' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN' +
                 ' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in' +
-                ' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT 10',
+                ' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT ?',
                 null, { raw: true },
                 [
                     id,
@@ -65,7 +64,36 @@ module.exports = function(sequelize, DataTypes) {
                     id,
                     id,
                     id,
-                    id
+                    id,
+                    limit
+                ]);
+            }
+        },
+        instanceMethods: {
+            similarStudents: function(_limit) {
+                var id = this.id;
+                var limit = _limit || 10;
+                return sequelize.query('SELECT s.id, s.matric, s.displayName, intersection.cnt AS common,' +
+                ' CASE WHEN not_in.cnt IS NULL' +
+                ' THEN intersection.cnt / (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?)' +
+                ' ELSE intersection.cnt / (not_in.cnt + (SELECT COUNT(ModuleId) FROM StudentModules WHERE StudentId = ?))' +
+                ' END AS jaccardIndex' +
+                ' FROM Students s' +
+                ' INNER JOIN (SELECT StudentId, COUNT(*) AS cnt FROM StudentModules WHERE ModuleId IN (SELECT ModuleId FROM StudentModules WHERE StudentId = ?)' +
+                ' AND StudentId != ? GROUP BY StudentId) AS intersection' +
+                ' ON s.id = intersection.StudentId' +
+                ' LEFT JOIN (SELECT StudentId, COUNT(ModuleId) AS cnt FROM StudentModules WHERE StudentId != ? AND NOT ModuleId IN' +
+                ' (SELECT ModuleId FROM StudentModules WHERE StudentId = ?) GROUP BY StudentId) AS not_in' +
+                ' ON s.id = not_in.StudentId ORDER BY jaccardIndex DESC LIMIT ?',
+                null, { raw: true },
+                [
+                    id,
+                    id,
+                    id,
+                    id,
+                    id,
+                    id,
+                    limit
                 ]);
             }
         }

@@ -204,6 +204,180 @@ app.get('/student/:matric', function(req, res) {
     });
 });
 
+app.get('/student/:matric/graph.json', function(req, res) {
+    if (config.auth && !req.isAuthenticated()) {
+        res.redirect('/login');
+        return;
+    }
+
+    Student.find({
+        where: { matric: req.params.matric },
+        include: [Module]
+    }).success(function(student) {
+        if (!student) {
+            res.send(404);
+            return;
+        }
+
+        var groupCount = 1;
+
+        var studentIndex = {};
+        var graph = {
+            nodes: [
+                {
+                    name: student.displayName,
+                    group: 0
+                }
+            ],
+            links: []
+        };
+
+        studentIndex[student.matric] = 0;
+
+        student.similarStudents(20).success(function(students) {
+            function iter(students) {
+                if (_.isEmpty(students)) {
+                    res.json(graph);
+                    return;
+                }
+
+                var student = _.first(students);
+                graph.nodes.push({
+                    name: student.displayName,
+                    group: groupCount++
+                });
+
+                studentIndex[student.matric] = graph.nodes.length-1;
+
+                graph.links.push({
+                    source: 0,
+                    target: studentIndex[student.matric],
+                    value: 1/student.common
+                });
+
+
+                Student.similarStudents(student.id, 20).success(function(students2) {
+                    for (var i=0; i<students2.length; i++) {
+                        var student2 = students2[i];
+                        if (studentIndex[student2.matric] !== undefined) {
+                            graph.links.push({
+                                source: studentIndex[student.matric],
+                                target: studentIndex[student2.matric],
+                                value: 1/student2.common
+                            });
+
+                            continue;
+                        }
+
+                        graph.nodes.push({
+                            name: student2.displayName,
+                            group: graph.nodes[studentIndex[student.matric]].group
+                        });
+
+                        studentIndex[student2.matric] = graph.nodes.length-1;
+
+                        graph.links.push({
+                            source: studentIndex[student.matric],
+                            target: studentIndex[student2.matric],
+                            value: 1/student2.common
+                        });
+                    }
+
+                    iter(_.rest(students));
+                });
+            }
+
+            iter(students);
+        });
+
+        /*
+
+        var moduleIndex = {};
+        var studentIndex = {};
+
+        var graph = {
+            nodes: [
+                {
+                    name: student.displayName,
+                    group: 0,
+                }
+            ],
+            links: []
+        };
+
+        studentIndex[student.matric] = 0;
+
+        for (var i=0; i<student.modules.length; i++) {
+            var module = student.modules[i];
+            graph.nodes.push({
+                name: module.code,
+                group: module.ModuleDepartmentId
+            });
+
+            moduleIndex[module.code] = graph.nodes.length-1;
+
+            graph.links.push({
+                source: 0,
+                target: moduleIndex[module.code],
+                value: 2
+            });
+        }
+
+        student.similarStudents(25).success(function(students) {
+            function iter(students) {
+                if (_.isEmpty(students)) {
+                    res.json(graph);
+                    return;
+                }
+
+                var student = _.first(students);
+
+                Student.find({
+                    where: { matric: student.matric },
+                    include: [Module]
+                }).success(function(student) {
+                    graph.nodes.push({
+                        name: student.displayName,
+                        group: 0
+                    });
+
+                    studentIndex[student.matric] = graph.nodes.length-1;
+
+                    for (var i=0; i<student.modules.length; i++) {
+                        var module = student.modules[i];
+
+                        if (moduleIndex[module.code] !== undefined) {
+                            graph.links.push({
+                                source: studentIndex[student.matric],
+                                target: moduleIndex[module.code]
+                            });
+
+                            continue;
+                        }
+
+                        graph.nodes.push({
+                            name: module.code,
+                            group: module.ModuleDepartmentId
+                        });
+
+                        moduleIndex[module.code] = graph.nodes.length-1;
+
+                        graph.links.push({
+                            source: studentIndex[student.matric],
+                            target: moduleIndex[module.code],
+                            value: 1
+                        });
+                    }
+
+                    iter(_.rest(students));
+                });
+            }
+
+            iter(students);
+        });*/
+    });
+});
+
 app.get('/module/suggest', function(req, res) {
     if (config.auth && !req.isAuthenticated()) {
         res.redirect('/login');

@@ -45,19 +45,19 @@
     border-radius: 5px;
 }
 tr:first-of-type th:first-child {
-    border-top-left-radius: 5px;    
+    border-top-left-radius: 5px;
 }
 
 tr:first-of-type th:last-child {
-    border-top-right-radius: 5px;    
+    border-top-right-radius: 5px;
 }
 
 tr:last-of-type td:first-child {
-    border-bottom-left-radius: 5px;    
+    border-bottom-left-radius: 5px;
 }
 
 tr:last-of-type td:last-child {
-    border-bottom-right-radius: 5px;    
+    border-bottom-right-radius: 5px;
 }
 
 .tablesorter-bootstrap>thead>tr>th, .tablesorter-bootstrap>tbody>tr>th, .tablesorter-bootstrap>tfoot>tr>th {
@@ -148,7 +148,7 @@ tr:last-of-type td:last-child {
     position: relative;
 }
 .left-inner-addon input {
-    padding-left: 30px;    
+    padding-left: 30px;
 }
 .left-inner-addon i {
     position: absolute;
@@ -160,7 +160,7 @@ tr:last-of-type td:last-child {
     position: relative;
 }
 .right-inner-addon input {
-    padding-right: 30px;    
+    padding-right: 30px;
 }
 .right-inner-addon i {
     z-index: 10;
@@ -185,4 +185,25 @@ tr:last-of-type td:last-child {
     .main-container {
         margin-top:150px;
     }
+}
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+.d3-tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 10px;
+    background-color: black;
+    border: 0px;
+    border-radius: 10px;
+    color: white;
+    pointer-events: none;
 }
