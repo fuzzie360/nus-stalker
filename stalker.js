@@ -263,7 +263,7 @@ app.get('/student/:matric/graph.json', function(req, res) {
                             graph.links.push({
                                 source: studentIndex[student.matric],
                                 target: studentIndex[student2.matric],
-                                value: 1/student2.common
+                                value: 1+1/student2.common
                             });
 
                             continue;
