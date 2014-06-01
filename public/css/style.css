@@ -187,6 +187,10 @@ tr:last-of-type td:last-child {
     }
 }
 
+.d3-graph {
+    padding: 0px;
+}
+
 .node {
   stroke: #fff;
   stroke-width: 1.5px;

@@ -477,8 +477,8 @@ function appendChecksum(id) {
     </script>
 
     <h3>Student Similarity Graph</h3>
-    <div class="thumbnail chart">
-        <svg class="graph"></svg>
+    <div class="thumbnail d3-graph">
+        <svg id="student-similarity-graph"></svg>
     </div>
 <% } %>
 
@@ -486,7 +486,7 @@ function appendChecksum(id) {
 <script>
 
 var width = $('.container').width();
-var height = 400;
+var height = 500;
 
 var color = d3.scale.category20();
 
@@ -495,7 +495,7 @@ var force = d3.layout.force()
     .linkDistance(30)
     .size([width, height]);
 
-var svg = d3.select(".graph")
+var svg = d3.select("#student-similarity-graph")
     .attr("width", width)
     .attr("height", height);
 
