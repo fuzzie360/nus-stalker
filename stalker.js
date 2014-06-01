@@ -249,8 +249,6 @@ app.get('/student/:matric/graph.json', function(req, res) {
                     });
 
                     studentIndex[student.matric] = graph.nodes.length-1;
-                } else {
-                    graph.nodes[studentIndex[student.matric]].group = groupCount++;
                 }
 
                 graph.links.push({
