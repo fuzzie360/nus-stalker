@@ -242,12 +242,14 @@ app.get('/student/:matric/graph.json', function(req, res) {
                 }
 
                 var student = _.first(students);
-                graph.nodes.push({
-                    name: student.displayName,
-                    group: groupCount++
-                });
+                if (studentIndex[student.matric] === undefined) {
+                    graph.nodes.push({
+                        name: student.displayName,
+                        group: groupCount++
+                    });
 
-                studentIndex[student.matric] = graph.nodes.length-1;
+                    studentIndex[student.matric] = graph.nodes.length-1;
+                }
 
                 graph.links.push({
                     source: 0,
@@ -259,22 +261,19 @@ app.get('/student/:matric/graph.json', function(req, res) {
                 Student.similarStudents(student.id, 20).success(function(students2) {
                     for (var i=0; i<students2.length; i++) {
                         var student2 = students2[i];
-                        if (studentIndex[student2.matric] !== undefined) {
-                            graph.links.push({
-                                source: studentIndex[student.matric],
-                                target: studentIndex[student2.matric],
-                                value: 1+1/student2.common
-                            });
 
+                        if (studentIndex[student.matric] === 0) {
                             continue;
                         }
 
-                        graph.nodes.push({
-                            name: student2.displayName,
-                            group: graph.nodes[studentIndex[student.matric]].group
-                        });
+                        if (studentIndex[student2.matric] === undefined) {
+                            graph.nodes.push({
+                                name: student2.displayName,
+                                group: graph.nodes[studentIndex[student.matric]].group
+                            });
 
-                        studentIndex[student2.matric] = graph.nodes.length-1;
+                            studentIndex[student2.matric] = graph.nodes.length-1;
+                        }
 
                         graph.links.push({
                             source: studentIndex[student.matric],
