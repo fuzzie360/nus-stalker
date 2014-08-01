@@ -4,6 +4,8 @@ var http = require('http');
 
 var _ = require('underscore');
 var express = require('express');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
 var flash = require('connect-flash');
 var ejs = require('ejs');
 var passport = require('passport');
@@ -48,8 +50,8 @@ var app = express();
 var server = http.createServer(app);
 app.engine('html', ejs.renderFile);
 app.use(express.static(__dirname + '/public'));
-app.use(express.cookieParser());
-app.use(express.bodyParser());
+app.use(cookieParser());
+app.use(bodyParser());
 app.use(express.session({
     store: new MySQLSessionStore(config.db.database,
         config.db.user,
@@ -442,20 +444,10 @@ app.get('/logout', function(req, res) {
 
 app.post('/auth/openid', passport.authenticate('openid'));
 
-app.get('/auth/openid/return', passport.authenticate('openid'), function(req, res) {
-    /*var allowed = [ 'a0096836'];
-
-    if (allowed.indexOf(req.user.id) < 0) {
-        req.logout();
-    }
-
-    if (!req.isAuthenticated()) {
-        res.redirect('/forbidden');
-        return;
-    }*/
-
-    res.redirect('/');
-});
+app.get('/auth/openid/return', passport.authenticate('openid', {
+    successRedirect: '/',
+    failureRedirect: '/login'
+}));
 
 app.get('/forbidden', function (req, res) {
     res.render('forbidden.ejs');
