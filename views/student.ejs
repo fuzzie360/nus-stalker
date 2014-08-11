@@ -477,13 +477,16 @@ function appendChecksum(id) {
     </script>
 
     <h3>Student Similarity Graph</h3>
-    <div class="thumbnail d3-graph">
-        <svg id="student-similarity-graph"></svg>
+    <div class="thumbnail d3-graph text-center">
+        <button class="btn btn-default" onclick="loadGraph();">Load graph</button>
     </div>
 <% } %>
 
 <script src="/js/d3.min.js"></script>
 <script>
+
+function loadGraph() {
+$('.d3-graph').html('<svg id="student-similarity-graph"></svg>');
 
 var width = $('.container').width();
 var height = 500;
@@ -552,6 +555,7 @@ d3.json("<%= student.matric %>/graph.json", function(error, graph) {
         .attr("cy", function(d) { return d.y; });
   });
 });
+}
 
 </script>
 
