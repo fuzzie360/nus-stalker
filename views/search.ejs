@@ -71,7 +71,7 @@ function appendChecksum(id) {
         <tbody>
             <%
                 var now = new Date();
-                var hasAyStarted = !(now.getMonth() < 8);
+                var hasAyStarted = now.getMonth() > 6;
                 var refYear = now.getFullYear() - 2000;
                 refYear = hasAyStarted ? refYear : refYear-1;
             %>

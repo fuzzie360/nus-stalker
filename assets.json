@@ -1,0 +1,32 @@
+{
+    "/build/script.js": [
+        "/js/md5.js",
+        "/js/underscore-min.js",
+        "/js/jquery-1.10.2.min.js",
+        "/js/bootstrap.min.js",
+        "/js/jquery.highlight.js",
+        "/js/jquery.tablesorter.min.js",
+        "/js/jquery.tablesorter.pager.js",
+        "/js/jquery.tablesorter.widgets.min.js",
+        "/js/parsers/parser-file-type.js",
+        "/js/widgets/widget-grouping.js",
+        "/js/typeahead.bundle.js",
+        "/js/jquery.flot.js",
+        "/js/jquery.flot.categories.js",
+        "/js/jquery.flot.stack.js",
+        "/js/jquery.flot.pie.js",
+        "/js/jquery.flot.axislabels.js",
+        "/js/jquery.gravatar.js",
+        "/js/d3.min.js",
+        "/js/searchWidget.js",
+        "/js/script.js"
+    ],
+    "/build/style.css": [
+        "/css/bootstrap.min.css",
+        "/css/bootstrap-theme.min.css",
+        "/css/font-awesome.min.css",
+        "/css/theme.bootstrap.css",
+        "/css/theme.bootstrap_2.css",
+        "/css/style.css"
+    ]
+}

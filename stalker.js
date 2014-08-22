@@ -3,7 +3,9 @@ var util = require('util');
 var http = require('http');
 
 var _ = require('underscore');
+var etagify = require('etagify');
 var express = require('express');
+var cachify = require('connect-cachify');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var flash = require('connect-flash');
@@ -45,11 +47,18 @@ passport.use(new OpenIDStrategy({
     }
 ));
 
+var assets = require('./assets');
+
 // set up express
 var app = express();
 var server = http.createServer(app);
+app.use(cachify.setup(assets, {
+    root: __dirname + "/public",
+    production: false
+}));
 app.engine('html', ejs.renderFile);
 app.use(express.static(__dirname + '/public'));
+app.use(etagify());
 app.use(cookieParser());
 app.use(bodyParser());
 app.use(express.session({
@@ -73,6 +82,8 @@ app.get('/', function(req, res) {
         res.redirect('/login');
         return;
     }
+
+    res.etagify();
 
     var randoms = [
         'ALL YOUR DATABASE ARE BELONG TO US',
@@ -107,6 +118,8 @@ app.get('/search', function(req, res) {
         res.redirect('/login');
         return;
     }
+
+    res.etagify();
 
     if (!req.query.q) {
         req.flash('error', 'You must give a search term to query');
@@ -153,6 +166,8 @@ app.get('/student/suggest', function(req, res) {
         return;
     }
 
+    res.etagify();
+
     Student.suggest(req.query.q).success(function(names) {
         var data = [];
         for (var i=0; i<names.length; i++) {
@@ -184,6 +199,8 @@ app.get('/student/:matric', function(req, res) {
         return;
     }
 
+    res.etagify();
+
     Student.find({
         where: { matric: req.params.matric },
         include: [Career, Faculty, Course, {
@@ -195,6 +212,15 @@ app.get('/student/:matric', function(req, res) {
         if (!student) {
             res.send(404);
             return;
+        }
+
+        if (student.courses.length > 0) {
+            var coursesGrouped = _.groupBy(student.courses, function(c) {
+                return c.studentCourse.year * 100 + c.studentCourse.semester;
+            });
+
+            var maxKey = _.max(_.keys(coursesGrouped));
+	    student.courses = coursesGrouped[maxKey];
         }
 
         student.similarStudents().success(function(similarModules) {
@@ -211,6 +237,8 @@ app.get('/student/:matric/graph.json', function(req, res) {
         res.redirect('/login');
         return;
     }
+
+    res.etagify();
 
     Student.find({
         where: { matric: req.params.matric },
@@ -385,6 +413,8 @@ app.get('/module/suggest', function(req, res) {
         return;
     }
 
+    res.etagify();
+
     Module.suggest(req.query.q).success(function(modules) {
         var data = [];
         for (var i=0; i<modules.length; i++) {
@@ -407,6 +437,8 @@ app.get('/module/:code', function(req, res) {
         res.redirect('/login');
         return;
     }
+
+    res.etagify();
 
     Module.find({
         where: { code: req.params.code },
@@ -434,6 +466,7 @@ app.get('/login', function(req, res) {
         res.redirect('/');
         return;
     }
+    res.etagify();
     res.render('login.ejs');
 });
 

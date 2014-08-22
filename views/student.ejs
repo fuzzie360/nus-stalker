@@ -82,13 +82,13 @@ function appendChecksum(id) {
     </tr>
     <%
         var now = new Date();
-        var hasAyStarted = !(now.getMonth() < 8);
+        var hasAyStarted = now.getMonth() > 6;
         var refYear = now.getFullYear() - 2000;
         refYear = hasAyStarted ? refYear : refYear-1;
     %>
     <tr>
         <th>Year</th>
-        <td>
+        <td><!-- <%= student.enrolledOn %> -->
             <%= student.enrolledOn ? 'Year ' + (refYear - student.enrolledOn + 1) : 'Unknown' %>
         </td>
     </tr>
@@ -106,22 +106,17 @@ function appendChecksum(id) {
     <table id="table-modules" class="table">
         <thead>
             <tr>
-                <th colspan="2">Semester</th>
-                <th rowspan="2" class="group-letter-2">Code</th>
-                <th rowspan="2" class="group-none">Title</th>
-                <th rowspan="2">MC</th>
-            </tr>
-            <tr>
-                <th class="sorter-false group-letter-99">Year</th>
-                <th class="sorter-false">Sem</th>
+                <th class="group-letter-999">Semester</th>
+                <th class="group-letter-2">Code</th>
+                <th class="group-none">Title</th>
+                <th>MC</th>
             </tr>
         </thead>
         <tbody>
             <% for (var i=0; i<student.modules.length; i++){ %>
                 <% var m = student.modules[i] %>
                 <tr onclick="module('<%= m.code %>');" class="table-hand">
-                    <td><%= 2000 + m.studentModule.year %> <span style="display:none"> Semester <%= m.studentModule.semester %></span></td>
-                    <td><%= m.studentModule.semester %></td>
+                    <td>AY<%= m.studentModule.year %>/<%= m.studentModule.year+1 %> Sem <%= m.studentModule.semester %></td>
                     <td><%= m.code %></td>
                     <td><%= m.name %></td>
                     <td><%= m.mc %></td>
@@ -197,7 +192,7 @@ function appendChecksum(id) {
                 zebra : ['even', 'odd'],
                 filter_reset : '.reset',
     		},
-            sortList: [[0,1],[1,1],[2,0]]
+            sortList: [[0,1],[1,0]]
     	});
 
         $('#table-similar-modules').tablesorter({
@@ -482,7 +477,6 @@ function appendChecksum(id) {
     </div>
 <% } %>
 
-<script src="/js/d3.min.js"></script>
 <script>
 
 function loadGraph() {

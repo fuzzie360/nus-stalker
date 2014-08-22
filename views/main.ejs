@@ -1,9 +1,5 @@
 <% include head %>
 <div class="text-center main-container">
-<div class="text-left alert alert-info" role="alert">
-<p>I know the database is severely out of sync. The last sync was performed in January. The next sync is scheduled on 12/08/14. A much needed hardware upgrade will also be performed. The main speed up will come from the increase of RAM from 512MB to 2GB.</p>
-<p>I know Stalkers experienced intermittent downtime. All these downtime were caused by the NUS openid service being a stupid piece of shit.</p>
-<p>--Fazli</p>
 </div>
     <div>
         <img src="img/nsa.png">
@@ -29,9 +25,9 @@
         <p class="text-muted"><%= random %></p>
     </div>
 </div>
-<script src="/js/searchWidget.js"></script>
 <script>
 $(function(){
+    searchWidget();
     var search = $('.typeahead')
     search.focus();
     search.select();

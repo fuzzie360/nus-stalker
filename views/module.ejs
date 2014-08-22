@@ -55,22 +55,17 @@ function appendChecksum(id) {
 <table id="table-students" class="table table-hover">
     <thead>
         <tr>
-            <th colspan="2">Semster</th>
-            <th rowspan="2" class="group-letter-4">Matric</th>
-            <th rowspan="2">Name</th>
-            <th rowspan="2" class="group-letter-99">Faculty</th>
-        </tr>
-        <tr>
-            <th class="sorter-false group-letter-99">Year</th>
-            <th class="sorter-false">Sem</th>
+            <th class="group-letter-99">Semster</th>
+            <th class="group-letter-4">Matric</th>
+            <th>Name</th>
+            <th class="group-letter-99">Faculty</th>
         </tr>
     </thead>
     <tbody>
         <% for (var i=0; i<module.students.length; i++) { %>
             <% var s = module.students[i] %>
             <tr onclick="student('<%= s.matric %>');" class="table-hand">
-                <td><%= 2000 + s.studentModule.year %> <span style="display:none"> Semester <%= s.studentModule.semester %></span></td>
-                <td><%= s.studentModule.semester %></td>
+                <td>AY<%= s.studentModule.year %>/<%= s.studentModule.year+1 %> Sem <%= s.studentModule.semester %></td>
                 <td style="text-transform:uppercase"><%= appendChecksum(s.matric) %></td>
                 <td><%= s.displayName %></td>
                 <td><%= s.faculties[0] ? s.faculties[0].name : '-' %></td>
@@ -135,7 +130,7 @@ $(function() {
             filter_reset : '.reset',
 			group_separator : '-'
 		},
-        sortList: [[0,1],[1,1],[2,0]]
+        sortList: [[0,1],[1,0]]
 	}).on('pagerInitialized pagerComplete', function (e, c) {
         var i, pages = '', t = [],
             cur = c.page + 1,
@@ -169,19 +164,21 @@ $(function() {
 
     <%
         var now = new Date();
-        var hasAyStarted = !(now.getMonth() < 8);
+        var hasAyStarted = now.getMonth() > 6;
         var refYear = now.getFullYear() - 2000;
         refYear = hasAyStarted ? refYear : refYear-1;
     %>
 
     var students = [
     <% for (var i=0; i<module.students.length; i++){ %>
-        <% var s = module.students[i] %>
+        <%
+            var s = module.students[i];
+        %>
         {
             name: "<%= s.displayName %>",
             semester: "<%= 2000 + s.studentModule.year %> Sem <%= s.studentModule.semester %>",
             faculty: "<%= s.faculties[0] ? s.faculties[0].name : 'No Faculty' %>",
-            year: "<%= s.enrolledOn ? 'Year ' + (refYear - s.enrolledOn + 1) : 'Unknown' %>"
+            year: "<%= s.enrolledOn ? 'Year ' + (refYear - s.enrolledOn + 1 - (refYear - s.studentModule.year)) : 'Unknown' %>"
         },
     <% } %>
     ];
