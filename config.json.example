@@ -5,15 +5,24 @@
             "port": 9003
     },
 
-        "db": {
-            "host": "127.0.0.1",
-            "user": "root",
-            "pass": "",
-            "database": "stalker"
-        },
+    "db": {
+        "host": "127.0.0.1",
+        "user": "root",
+        "pass": "",
+        "database": "stalker"
+    },
 
-        "ldap": {
-            "user": "nusstu\\USERNAME",
-            "pass": "PASSWORD"
+    "ldap": {
+        "user": "nusstu\\USERNAME",
+        "pass": "PASSWORD"
+    },
+
+    "session": {
+        "secret": "SESSION_SECRET_HERE",
+        "opt": {
+            "forceSync": false,
+            "checkExpirationInterval": 600000,
+            "defaultExpiration": 86400000
         }
+    }
 }
